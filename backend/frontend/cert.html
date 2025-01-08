@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>PetrikWifi - CertCenter</title>
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" media="screen" href="./css/style.css">
+    <style>
+        @media screen and (max-width: 1200px) {
+            .dashpanel {
+                width: 90%;
+                height: 97vh !important;
+                top: 1% !important;
+            }
+
+        }
+    </style>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+</head>
+
+<body onload="(async () => {
+    await checkAuth();
+    })()">
+
+    <!-- particles.js container -->
+    <div class="dashpanel" style="height: 60vh; min-height: 450px;">
+        <div class="innerPanel">
+            <img src="./assets/logo.png" alt="" srcset="" width="60" height="60">
+            <h1 id="title" style="margin-top: 10px; margin-bottom: 10px; font-size: 18px">PetrikWifi - Tanúsítvány</h1>
+            <p style="font-size: large; margin-left: 10px; margin-right: 10px"><strong>A WiFi CA tanúsítvány garantálja
+                    a hálózat hitelességét.</strong> Ez azt jelenti, hogy biztos lehetsz benne, hogy a csatlakozott
+                hálózat valóban az, aminek állítja magát, és nem egy rosszindulatú támadó által létrehozott hamis
+                hálózat, ami az adataidat próbálja ellopni.</p>
+            <div
+                style="display: flex;flex-wrap: wrap;width: 100%;flex-direction: row;align-content: center;justify-content: center;align-items: center;margin-bottom: 10px;">
+                <button class="log" style="width: auto; padding: 10px"
+                    onclick="window.location.href = '/PetrikWifiCA.pem'">Tanúsítvány letöltése (pem)</button>
+                <button class="log" style="width: auto; padding: 10px"
+                    onclick="window.location.href = '/PetrikWifiCA.der'">Tanúsítvány letöltése (der)</button>
+            </div>
+            <div style="width: 90%; margin: 10px">
+                <p style="display: inline-block;">
+                    RADIUS SHA-1 ujjlenyomat: </p>
+                <p style="font-family: monospace;word-break: break-all;">
+                    F1:1F:C9:96:24:7A:A2:4C:8F:30:4E:F2:13:6A:A9:8C:D2:09:BC:07</p>
+                <br>
+                <p style="display: inline-block;">
+                    RADIUS SHA-256 ujjlenyomat: </p>
+                <p style="font-family: monospace;word-break: break-all;">
+                    D5:6B:6A:21:41:38:58:84:6D:ED:C1:4F:DC:C5:38:36:5F:08:1B:FF:CA:61:80:BA:7E:D1:3F:6B:51:46:47:78</p>
+                <br>
+                <p style="display: inline-block;">
+                    RADIUS SHA-512 ujjlenyomat: </p>
+                <p style="font-family: monospace;word-break: break-all;">
+                    2D:B3:B0:2F:3A:C0:AF:5D:77:4A:9D:94:67:C0:15:AB:F2:C4:0E:00:3F:91:2F:17:AF:1F:7B:EF:D4:32:5E:49:9B:1D:41:A0:57:9B:C9:6C:44:34:8F:DB:83:E9:FE:58:2B:75:36:5F:D8:38:DF:B2:B6:AE:7B:17:96:E9:D0:2A
+                </p>
+                <br>
+            </div>
+            <hr style="color: black; width: 100%;">
+            <p>Ne ijedj meg, itt van néhány videó a segítségedre:</p>
+            <div
+                style="display: flex;flex-wrap: wrap;width: 100%;flex-direction: row;align-content: center;justify-content: center;align-items: center;margin-bottom: 10px;">
+                <button class="log" style="width: auto; padding: 10px"
+                    onclick="window.location.href = '/PetrikWifiCA.pem'">Samsung</button>
+                <button class="log" style="width: auto; padding: 10px"
+                    onclick="window.location.href = '/PetrikWifiCA.der'">iPhone</button>
+                <button class="log" style="width: auto; padding: 10px"
+                    onclick="window.location.href = '/PetrikWifiCA.der'">Windows</button>
+            </div>
+        </div>
+    </div>
+    <div id="particles-js">
+    </div>
+
+
+    <!-- scripts -->
+    <script src="./particles.js"></script>
+    <script src="./js/particle-loader.js"></script>
+    <script src="./js/check-auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Made by Novy -->
+
+    <div class="footer">
+        <p>💖 <a href="https://github.com/NovySoft/PetrikWifi" target="_blank" style="color: white; text-decoration: underline;">OpenSource</a> 💖</p>
+    </div>
+</body>
+
+</html>

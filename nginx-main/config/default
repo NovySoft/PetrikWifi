@@ -1,0 +1,73 @@
+upstream netdata {
+    server 127.0.0.1:19999;
+    keepalive 64;
+}
+
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    location /stub_status {
+         stub_status;
+         auth_basic "Netdata ONLY!";
+         auth_basic_user_file /etc/nginx/passwords/stub_pass.htpasswd;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+        listen 443 ssl;
+        listen [::]:443 ssl;
+
+        ssl_certificate /etc/nginx/certs/nginx-selfsigned.crt;
+        ssl_certificate_key /etc/nginx/certs/nginx-selfsigned.key;
+        ssl_dhparam /etc/nginx/certs/dhparam.pem;
+
+        access_log /var/log/nginx/access.log;
+        error_log /var/log/nginx/error.log;
+
+        root /var/www/html;
+
+        index index.html index.nginx-debian.html;
+        add_header                      X-Content-Type-Options nosniff always;
+        add_header                      X-XSS-Protection "1; mode=block" always;
+        add_header                      X-Frame-Options DENY always;
+
+        server_name _;
+
+        location / {
+                try_files $uri $uri/ =404;
+        }
+
+        location /stub_status {
+                stub_status;
+                auth_basic "Netdata ONLY!";
+                auth_basic_user_file /etc/nginx/passwords/stub_pass.htpasswd;
+        }
+
+        location = /netdata {
+            return 301 /netdata/;
+        }
+        
+        location ~ /netdata/(?<ndpath>.*) {
+            auth_basic "NetdataRealm";
+            auth_basic_user_file /etc/nginx/passwords/netdata.htpasswd;
+            proxy_redirect off;
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-Host $host;
+            proxy_set_header X-Forwarded-Server $host;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_http_version 1.1;
+            proxy_pass_request_headers on;
+            proxy_set_header Connection "keep-alive";
+            proxy_store off;
+            proxy_pass http://netdata/$ndpath$is_args$args;
+            gzip on;
+            gzip_proxied any;
+            gzip_types *;
+        }
+}

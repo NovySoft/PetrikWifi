@@ -1,0 +1,107 @@
+services:
+  freeradius:
+    image: freeradius/freeradius-server:latest-alpine
+    expose:
+      - 1812
+      - 1813
+      - 18121
+      - 1812/udp
+      - 1813/udp
+      - 18121/udp
+    ports:
+      - "1812:1812/udp"
+      - "1812:1812/tcp"
+      - "1813:1813/udp"
+      - "1813:1813/tcp"
+      - "18121:18121/udp"
+      - "18121:18121/tcp"
+    networks:
+      petrik-radius-bridge:
+        ipv4_address: 172.18.1.2
+    volumes:
+      - './freeradius/clients.conf:/opt/etc/raddb/clients.conf'
+      - './freeradius/default:/opt/etc/raddb/sites-available/default'
+      - './freeradius/rest:/opt/etc/raddb/mods-available/rest'
+      - './freeradius/docker-entrypoint.sh:/docker-entrypoint.sh'
+      - './freeradius/authorize:/opt/etc/raddb/mods-config/files/authorize'
+      - './freeradius/inner-tunnel:/opt/etc/raddb/sites-available/inner-tunnel'
+      - './freeradius/status:/opt/etc/raddb/sites-available/status'
+      - './freeradius/inner-eap:/opt/etc/raddb/mods-available/inner-eap'
+      - './freeradius/eap:/opt/etc/raddb/mods-available/eap'
+      - './certs/ca.cnf:/opt/etc/raddb/certs/ca.cnf'
+      - './certs/ca.key:/opt/etc/raddb/certs/ca.key'
+      - './certs/ca.pem:/opt/etc/raddb/certs/ca.pem'
+      - './certs/ca.crl:/certs/ca.crl'
+      - './certs/ca.der:/certs/ca.der'
+      - './certs/index.txt:/opt/etc/raddb/certs/index.txt'
+      - './certs/index.txt.old:/opt/etc/raddb/certs/index.txt.old'
+      - './certs/index.txt.attr:/opt/etc/raddb/certs/index.txt.attr'
+      - './certs/index.txt.attr.old:/opt/etc/raddb/certs/index.txt.attr.old'
+      - './certs/inner-server.cnf:/opt/etc/raddb/certs/inner-server.cnf'
+      - './certs/inner-server.crt:/opt/etc/raddb/certs/inner-server.crt'
+      - './certs/inner-server.csr:/opt/etc/raddb/certs/inner-server.csr'
+      - './certs/inner-server.key:/opt/etc/raddb/certs/inner-server.key'
+      - './certs/inner-server.p12:/opt/etc/raddb/certs/inner-server.p12'
+      - './certs/inner-server.pem:/opt/etc/raddb/certs/inner-server.pem'
+      - './certs/client.cnf:/opt/etc/raddb/certs/client.cnf'
+      - './certs/client.crt:/opt/etc/raddb/certs/client.crt'
+      - './certs/client.csr:/opt/etc/raddb/certs/client.csr'
+      - './certs/client.key:/opt/etc/raddb/certs/client.key'
+      - './certs/client.p12:/opt/etc/raddb/certs/client.p12'
+      - './certs/client.pem:/opt/etc/raddb/certs/client.pem'
+      - './certs/Makefile:/opt/etc/raddb/certs/Makefile'
+      - './certs/passwords.mk:/opt/etc/raddb/certs/passwords.mk'
+      - './certs/serial:/opt/etc/raddb/certs/serial'
+      - './certs/serial.old:/opt/etc/raddb/certs/serial.old'
+      - './certs/xpextensions:/opt/etc/raddb/certs/xpextensions'
+      - './certs/server.cnf:/opt/etc/raddb/certs/server.cnf'
+      - './certs/server.key:/opt/etc/raddb/certs/server.key'
+      - './certs/server.pem:/opt/etc/raddb/certs/server.pem'
+      - './certs/server.p12:/opt/etc/raddb/certs/server.p12'
+      - './certs/server.csr:/opt/etc/raddb/certs/server.csr'
+      - './certs/server.crt:/opt/etc/raddb/certs/server.crt'
+      - './certs/01.pem:/opt/etc/raddb/certs/01.pem'
+      - './certs/02.pem:/opt/etc/raddb/certs/02.pem'
+      - './certs/03.pem:/opt/etc/raddb/certs/03.pem'
+      - './certs/dh:/opt/etc/raddb/certs/dh'
+      - './certs/wifi@petrik.hu.p12:/opt/etc/raddb/certs/wifi@petrik.hu.p12'
+      - './certs/wifi@petrik.hu.pem:/opt/etc/raddb/certs/wifi@petrik.hu.pem'
+
+    command: radiusd -X
+    depends_on:
+      - auth_server
+    restart: always
+
+  auth_server:
+    platform: linux/x86_64
+    build:
+      context: ./backend/
+      dockerfile: dockerfile-node
+    expose:
+      - 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - './backend/src:/application/src'
+      - './backend/logs:/application/logs'
+      - './backend/frontend:/application/frontend'
+      - './backend/database:/application/database'
+    networks:
+      petrik-radius-bridge:
+        ipv4_address: 172.18.1.1
+    restart: always
+    environment:
+      - NODE_ENV=development
+      - SUPER_SECRET=Super_Secret
+      - MS_CLIENT_ID=MS_CLIENT_ID
+      - MS_CLIENT_SECRET=MS_CLIENT_SECRET
+      - MS_AUTHORIZE_PATH="/tenant/oauth2/v2.0/authorize"
+      - MS_TOKEN_PATH="/tenant/oauth2/v2.0/token"
+  
+networks:
+  petrik-radius-bridge:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.1.0/24
+          gateway: 172.18.1.254

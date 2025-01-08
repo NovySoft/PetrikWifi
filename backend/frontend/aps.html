@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>PetrikWifi - AP</title>
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" media="screen" href="./css/style.css">
+    <style>
+        @media screen and (max-width: 800px) {
+            .userContainer {
+                height: 80px !important;
+            }
+        }
+
+        @media screen and (max-width: 520px) {
+            .icons {
+                height: 30px !important;
+                width: 30px !important;
+            }
+        }
+
+        .swal-ctext {
+            margin-bottom: 0px;
+        }
+
+        .swal2-input {
+            margin-top: 0px !important;
+        }
+    </style>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+</head>
+
+<body onload="(async () => {
+    await checkAuth();
+    checkAdmin();
+    await getAllAps();
+    })()">
+
+    <!-- particles.js container -->
+    <div class="dashpanel" style="height: 95vh;top:2.5%; width: 95vw;">
+        <div style="overflow-y: scroll;margin:10px;height: 98%;">
+            <h1>Access Point Konfiguráció</h1>
+            <button class="log" onclick="newAp()">Új AP</button>
+            <div style="width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-content: center;
+            align-items: center;
+            margin-top: 10px;" id="mainContainer">
+
+            </div>
+        </div>
+    </div>
+
+    <div id="particles-js">
+    </div>
+
+
+    <!-- scripts -->
+    <script src="./particles.js"></script>
+    <script src="./js/particle-loader.js"></script>
+    <script src="./js/check-auth.js"></script>
+    <script src="./js/escape-html.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        async function getAllAps() {
+            const result = await fetch('/getAllAps', {
+                method: 'POST',
+            });
+
+            const data = await result.json();
+            console.log(data);
+
+            const mainContainer = document.getElementById('mainContainer');
+
+            for (const item of data) {
+                mainContainer.innerHTML += `<div style="width: 80%; padding:10px; background-color: #EEEEEE; height: 50px; border-radius: 15px; display: flex; align-content: center; align-items: center; margin-bottom: 10px"
+                    class="userContainer" onclick="apClicked(this)" data-ap="${item.AP}" data-ip="${item.IP}" data-comment="${item.comment}">
+                    <img src="./assets/ap.svg" width="45" class="icons" height="45" alt="">
+                    <div style="flex: 1; display: flex; flex-wrap: wrap;">
+                        <div
+                            style="width: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center;">
+                            <div style="flex: 1">
+                                <p style="text-align: center;">
+                                    MAC: ${item.AP}<br>
+                                    IP: ${item.IP}
+                                </p>
+                            </div>
+                            <div style="flex: 1">
+                                <p style="text-align: center;">
+                                    Megjegyzés:<br>
+                                    ${escapeHtml(item.comment)}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+        }
+
+        async function newAp() {
+            const result = await Swal.fire({
+                title: "Új AP hozzáadása",
+                html: `
+                <p class="swal-ctext">AP MAC címe</p>
+                <input type="text" id="ap" class="swal2-input" placeholder="AP MAC címe" required>
+                <p class="swal-ctext">AP IP címe</p>
+                <input type="text" id="ip" class="swal2-input" placeholder="AP IP címe" required>
+                <p class="swal-ctext">Megjegyzés</p>
+                <textarea id="comment" class="swal2-input" placeholder="Megjegyzés"></textarea>
+                `,
+            });
+            if (result.isConfirmed) {
+                let ap = document.getElementById('ap').value;
+                const ip = document.getElementById('ip').value;
+                const comment = document.getElementById('comment').value;
+
+                if (!ap || !ip || ap == '' || ip == '') {
+                    Swal.fire({
+                        title: 'Hiányzó adatok',
+                        text: 'Kérlek töltsd ki az összes mezőt!',
+                        icon: 'error',
+                    });
+                    return;
+                }
+
+                //Check if ap mac format is correct
+                ap = ap.replaceAll('-', ':').replaceAll('.', ':').toUpperCase();
+                const macRegex = /^([0-9A-Fa-f]{2}:){5}([0-9A-Fa-f]{2})$/;
+                if (!macRegex.test(ap)) {
+                    Swal.fire({
+                        title: 'Hibás AP MAC cím',
+                        text: 'Az AP MAC cím formátuma nem megfelelő! (AA:BB:CC:DD:EE:FF)',
+                        icon: 'error',
+                    });
+                    return;
+                }
+
+                //Check if ip format is correct
+                const ipRegex = /^([0-9]{1,3}\.){3}([0-9]{1,3})$/;
+                if (!ipRegex.test(ip)) {
+                    Swal.fire({
+                        title: 'Hibás IP cím',
+                        text: 'Az IP cím formátuma nem megfelelő!',
+                        icon: 'error',
+                    });
+                    return;
+                }
+
+                const res = await fetch('/createAp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ap,
+                        ip,
+                        comment,
+                    }),
+                });
+
+                const data = await res.json();
+                if (data.code === "OK") {
+                    await Swal.fire({
+                        title: 'Sikeres AP hozzáadás',
+                        icon: 'success',
+                    });
+                    location.reload();
+                } else {
+                    Swal.fire({
+                        title: 'Hiba történt',
+                        text: data.error,
+                        icon: 'error',
+                    });
+                }
+            }
+        }
+
+        async function apClicked(element) {
+            const ap = element.dataset.ap;
+            const ip = element.dataset.ip;
+            const comment = element.dataset.comment;
+
+            const result = await Swal.fire({
+                title: "AP szerkesztése",
+                html: `
+                <p class="swal-ctext">AP MAC címe</p>
+                <input type="text" id="ap" class="swal2-input" placeholder="AP MAC címe" value="${ap}" disabled>
+                <p class="swal-ctext">AP IP címe</p>
+                <input type="text" id="ip" class="swal2-input" placeholder="AP IP címe" value="${ip}" required>
+                <p class="swal-ctext">Megjegyzés</p>
+                <textarea id="comment" class="swal2-input" placeholder="Megjegyzés">${comment}</textarea>
+                `,
+                showDenyButton: true,
+                denyButtonText: 'Törlés',
+                confirmButtonText: 'Mentés',
+            });
+            if (result.isConfirmed) {
+                const newIp = document.getElementById('ip').value;
+                const newComment = document.getElementById('comment').value;
+
+                if (!newIp || newIp == '') {
+                    Swal.fire({
+                        title: 'Hiányzó adatok',
+                        text: 'Kérlek töltsd ki az összes mezőt!',
+                        icon: 'error',
+                    });
+                    return;
+                }
+
+                //Check if ip format is correct
+                const ipRegex = /^([0-9]{1,3}\.){3}([0-9]{1,3})$/;
+                if (!ipRegex.test(newIp)) {
+                    Swal.fire({
+                        title: 'Hibás IP cím',
+                        text: 'Az IP cím formátuma nem megfelelő!',
+                        icon: 'error',
+                    });
+                    return;
+                }
+
+                const res = await fetch('/updateAp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ap,
+                        ip: newIp,
+                        comment: newComment,
+                    }),
+                });
+
+                const data = await res.json();
+                if (data.code === "OK") {
+                    await Swal.fire({
+                        title: 'Sikeres AP szerkesztés',
+                        icon: 'success',
+                    });
+                    location.reload();
+                } else {
+                    Swal.fire({
+                        title: 'Hiba történt',
+                        text: data.error,
+                        icon: 'error',
+                    });
+                }
+            }
+            if (result.isDenied) {
+                // Delay a few milliseconds to prevent double click
+                await new Promise(r => setTimeout(r, 100));
+                const confirm = await Swal.fire({
+                    title: 'Biztosan törölni szeretnéd az AP-t?',
+                    html: `<p>Ez a művelet nem visszavonható!<br><br>AP MAC: ${ap}<br>AP IP: ${ip}<br>Megjegyzés: ${comment}</p>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Igen',
+                    cancelButtonText: 'Mégse',
+                });
+                if (confirm.isConfirmed) {
+                    const res = await fetch('/deleteAp', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            ap,
+                        }),
+                    });
+
+                    const data = await res.json();
+                    if (data.code === "OK") {
+                        await Swal.fire({
+                            title: 'Sikeres AP törlés',
+                            icon: 'success',
+                        });
+                        location.reload();
+                    } else {
+                        Swal.fire({
+                            title: 'Hiba történt',
+                            text: data.error,
+                            icon: 'error',
+                        });
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

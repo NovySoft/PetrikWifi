@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>PetrikWifi</title>
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" media="screen" href="./css/style.css">
+  <style>
+    @media screen and (max-width: 1200px) {
+      .panel {
+        width: 50%;
+        height: 50vh !important;
+        top: 25% !important;
+      }
+
+    }
+  </style>
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+</head>
+
+<body onload="(async () => {
+  await checkAuth(true, true);
+  })()">
+
+  <!-- particles.js container -->
+  <div class="panel" style="min-width: 300px;">
+    <div class="innerPanel">
+      <img src="./assets/logo.png" alt="" srcset="" width="80" height="80">
+      <h1 style="margin-top: 10px; margin-bottom: 10px; font-size: 18px">PetrikWifi</h1>
+      <button class="log" onclick="window.location.href = './login/microsoft'">Regisztráció/Belépés Iskolai Fiókkal</button>
+      <button class="log" onclick="window.location.href = './login.html'">Bejelentkezés Jelszóval</button>
+    </div>
+  </div>
+  <div id="particles-js">
+  </div>
+
+
+  <!-- scripts -->
+  <script src="./particles.js"></script>
+  <script src="./js/particle-loader.js"></script>
+  <script src="./js/check-auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+  <!-- Made by Novy -->
+  <div class="footer">
+    <p>💖 <a href="https://github.com/NovySoft/PetrikWifi" target="_blank" style="color: white; text-decoration: underline;">OpenSource</a> 💖</p>
+  </div>
+</body>
+
+</html>

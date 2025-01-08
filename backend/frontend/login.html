@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>PetrikWifi - Bejelentkezés</title>
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" media="screen" href="./css/style.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+</head>
+
+<body onload="(async () => {
+    await checkAuth(true, true);
+    })()">
+
+    <!-- particles.js container -->
+    <div class="dashpanel" style="height: 60vh; min-height: 415px;">
+        <div class="innerPanel">
+            <img src="./assets/logo.png" alt="" srcset="" width="60" height="60">
+            <h1 id="title" style="margin-top: 10px; margin-bottom: 10px; font-size: 18px">PetrikWifi</h1>
+            <div>
+                <input id="username" type="text" style="margin-bottom: 10px;" class="passinput"
+                    placeholder="Felhasználó">
+                <input id="password" type="password" style="margin-bottom: 10px;" class="passinput"
+                    placeholder="Jelszó">
+                <br>
+                <input type="checkbox" name="Show password" id=""
+                    onchange="document.getElementById('password').type = this.checked ? 'text' : 'password';">
+                <label for="Show password">Jelszó megjelenítése</label>
+                <br>
+                <button class="log" onclick="login()">Belépés</button>
+            </div>
+        </div>
+    </div>
+    <div id="particles-js">
+    </div>
+
+
+    <!-- scripts -->
+    <script src="./particles.js"></script>
+    <script src="./js/particle-loader.js"></script>
+    <script src="./js/check-auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const response = await fetch('/userlogin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username,
+                    password
+                })
+            });
+            const data = await response.json();
+            if (data.code === "OK") {
+                window.location.href = '/dashboard.html';
+            } else {
+                Swal.fire({
+                    title: "HIBA!",
+                    text: data.message,
+                    icon: "error",
+                });
+            }
+        }
+    </script>
+
+    <!-- Made by Novy -->
+    <div class="footer">
+        <p>💖 <a href="https://github.com/NovySoft/PetrikWifi" target="_blank" style="color: white; text-decoration: underline;">OpenSource</a> 💖</p>
+    </div>
+</body>
+
+</html>

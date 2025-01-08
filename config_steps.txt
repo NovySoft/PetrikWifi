@@ -1,0 +1,23 @@
+1. Install ubuntu server
+2. Install netdata using quickstart script
+3. Install `lm-sensors` to monitor temperatures
+4. Edit charts.d.conf to force sensors
+5. Setup custom issue.net (ssh login warning) and issue (console login warning).
+6. Setup fail2ban (ssh bruteforce protection)
+7. Install docker using quickstart script
+8. Enable docker startup via systemctl
+9. Add netdata to docker user group
+10. Install unifi docker into home/unifi directory
+    - 10.1 Copy unifi/docker-compose and initmongo.js
+    - 10.2 docker compose up -d
+11. Install nginx
+12. Install nginx-extras
+13. Set `server_tokens off;` and `more_set_headers 'Server: PetrikWifiTurbina';` in nginx.conf
+    - Copy nginx config files to sites-enabled
+    - Clone openspeedtest to apropriate folder
+14. Setup nginx stub status with password authentication, and netdata monnitoring
+15. Block netdata using iptables
+    -A INPUT -s 127.0.0.1/32 -p tcp -m tcp --dport 19999 -j ACCEPT
+    -A INPUT -p tcp -m tcp --dport 19999 -j DROP
+...
+Modify netdata freeradius config

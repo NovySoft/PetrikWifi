@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="hu">
+<!-- Copyright 2024 Novotny Levente -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petrik Wifi MGMT szerver</title>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #97ce71;
+            background-image: linear-gradient(to bottom right, #6fbdae, #add057);
+            background-size: contain;
+        }
+    </style>
+    <link rel="stylesheet" href="components.css">
+    <script>
+        function unifi() {
+            window.location.href = "https://" + window.location.hostname + ":8443/";
+        }
+
+        function netdata() {
+            window.open("/netdata/v1");
+        }
+
+        function auth() {
+            window.location.href = "./auth/login.html";
+        }
+
+        function speedtest() {
+            window.location.href = "https://" + window.location.hostname + ":3001?run&p=15";
+        }
+    </script>
+</head>
+
+<body>
+    <div
+        style="display: flex;height: 15vh; width: 100%;align-content: center;justify-content: center;align-items: center;">
+        <img src="./assets/logo.png" alt="Petrik Logo" style="object-fit: contain;max-width: 100%;max-height: 15vh;">
+    </div>
+    <h1 style="text-align: center;margin-top:0;margin-bottom:20px">WIFI beállítások</h1>
+    <div style="margin-top: 10vh;display: flex;">
+        <div style="width: calc(100% - 30px);margin: 15px;display: flex;justify-content: space-evenly; flex-wrap: wrap;">
+            <div style="flex: 1 1 0px;padding: 15px">
+                <img src="./assets/unifi.webp" onclick="unifi()" alt="" style="cursor: pointer;object-fit: contain;max-width: 80%;height: 35vh; display: block; margin: auto">
+                <input type="button" onclick="unifi()" class="appMainButton" value="Manage Unifi Controller" style="display: block;  margin-left: auto;margin-right: auto;margin-top: 10px">
+            </div>
+            <div style="flex: 1 1 0px;padding: 15px">
+                <img src="./assets/lock-4441691_1920.png" onclick="auth()" alt="" style="cursor: pointer;object-fit: contain;max-width: 80%; height: 35vh; display: block; margin: auto">
+                <input type="button" class="appMainButton" onclick="auth()" value="Manage Authentication" style="display: block; margin-left: auto;margin-right: auto;margin-top: 10px">
+            </div>
+            <div style="flex: 1 1 0px;padding: 15px">
+                <img src="./assets/netdata.png" onclick="netdata()" alt="" style="cursor: pointer;object-fit: contain;max-width: 80%; height: 35vh; display: block; margin: auto">
+                <input type="button" onclick="netdata()" class="appMainButton" value="View netdata stats" style="display: block; margin-left: auto;margin-right: auto;margin-top: 10px">
+            </div>
+            <div style="flex: 1 1 0px;padding: 15px">
+                <img src="./assets/speedtest.svg" onclick="speedtest()" alt="" style="cursor: pointer;object-fit: contain;max-width: 75%; height: 35vh; display: block; margin: auto">
+                <input type="button" onclick="speedtest()" class="appMainButton" value="Run speedtest" style="display: block; margin-left: auto;margin-right: auto;margin-top: 10px">
+            </div>
+        </div>
+    </div>
+    <div style="height: 15px;"></div>
+</body>
+
+</html>

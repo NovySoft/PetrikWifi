@@ -1,0 +1,103 @@
+rest {
+	tls {
+		check_cert_cn = no
+	}
+
+	connect_uri = "http://auth_server:3000"
+
+	#  Authorize/Authenticate
+	#
+	#  Code   Meaning       Process body  Module code
+	#  404    not found     no            notfound
+	#  410    gone          no            notfound
+	#  403    forbidden     no            userlock
+	#  401    unauthorized  yes           reject
+	#  204    no content    no            ok
+	#  2xx    successful    yes           ok/updated
+	#  5xx    server error  no            fail
+	#  xxx    -             no            invalid
+
+	authorize {
+		uri = "${..connect_uri}/radius/authorize"
+		method = 'post'
+		body = 'JSON'
+		data = '{"username": "%{User-Name}", "password": "%{User-Password}", "source": "%{Calling-Station-Id}", "destination": "%{Called-Station-Id}", "NAS": "%{NAS-Identifier}", "IP": "%{NAS-IP-Address}"}'
+		tls = ${..tls}
+	}
+	authenticate {
+		uri = "${..connect_uri}/radius/authenticate"
+		method = 'post'
+		body = 'JSON'
+		data = '{"username": "%{User-Name}", "password": "%{User-Password}", "source": "%{Calling-Station-Id}", "destination": "%{Called-Station-Id}", "NAS": "%{NAS-Identifier}", "IP": "%{NAS-IP-Address}"}'
+		tls = ${..tls}
+	}
+
+	#  Preacct/Accounting/Post-auth/Pre-Proxy/Post-Proxy
+	#
+	#  Code   Meaning       Process body  Module code
+	#  204    no content    no            ok
+	#  2xx    successful    yes           ok/updated
+	#  5xx    server error  no            fail
+	#  xxx    -             no            invalid
+	preacct {
+		uri = "${..connect_uri}/radius/preacct"
+		method = 'post'
+		body = 'JSON'
+		tls = ${..tls}
+	}
+	accounting {
+		uri = "${..connect_uri}/radius/accounting"
+		method = 'post'
+		body = 'JSON'
+		tls = ${..tls}
+	}
+	post-auth {
+		uri = "${..connect_uri}/radius/post-auth"
+		method = 'post'
+		body = 'JSON'
+		tls = ${..tls}
+	}
+	pre-proxy {
+		uri = "${..connect_uri}/radius/pre-proxy"
+		method = 'post'
+		body = 'JSON'
+		tls = ${..tls}
+	}
+	post-proxy {
+		uri = "${..connect_uri}/radius/post-proxy"
+		method = 'post'
+		body = 'JSON'
+		tls = ${..tls}
+	}
+
+	#  Options for calling rest xlats
+	#  uri and method will be derived from the string provided to the xlat
+	xlat {
+		body_uri_encode = yes
+		tls = ${..tls}
+	}
+
+	pool {
+		start = ${thread[pool].start_servers}
+		min = ${thread[pool].min_spare_servers}
+		max = ${thread[pool].max_servers}
+		spare = ${thread[pool].max_spare_servers}
+
+		#  Number of uses before the connection is closed
+		#
+		# 0 means "infinite"
+		uses = 0
+
+		#  The number of seconds to wait after the server tries
+		#  to open a connection, and fails.  During this time,
+		#  no new connections will be opened.
+		retry_delay = 30
+
+		#  The lifetime (in seconds) of the connection
+		lifetime = 0
+
+		#  idle timeout (in seconds).  A connection which is
+		#  unused for this length of time will be closed.
+		idle_timeout = 60
+	}
+}

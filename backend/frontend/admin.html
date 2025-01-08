@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>PetrikWifi - ADMIN</title>
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" media="screen" href="./css/style.css">
+    <style>
+        @media screen and (max-width: 800px) {
+            .userContainer {
+                height: 80px !important;
+            }
+        }
+
+        @media screen and (max-width: 520px) {
+            .icons {
+                height: 30px !important;
+                width: 30px !important;
+            }
+        }
+
+        .swal-ctext {
+            margin-bottom: 0px;
+        }
+
+        .swal2-input {
+            margin-top: 0px !important;
+        }
+    </style>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+</head>
+
+<body onload="(async () => {
+    await checkAuth();
+    checkAdmin();
+    await getAllUsers();
+    })()">
+
+    <!-- particles.js container -->
+    <div class="dashpanel" style="height: 95vh;top:2.5%; width: 95vw;">
+        <div style="overflow-y: scroll;margin:10px;height: 98%;">
+            <h1>Admin Panel</h1>
+            <div style="width: 100%;
+            display: flex;
+            align-content: center;
+            justify-content: center;
+            align-items: center;">
+                <img src="./assets/ap.svg" style="cursor: pointer;margin-right: 5px" alt="" srcset="" width="30"
+                    height="30" onclick="window.location.href = '/aps.html'">
+                <img src="./assets/createUser.svg" style="cursor: pointer;" alt="" srcset="" width="30" height="30"
+                    onclick="createNewUser()">
+                <img src="./assets/filter.svg" style="cursor: pointer;" alt="" srcset="" width="30" height="30" onclick="searchButtonClicked()">
+                <input type="text" name="search" id="search" class="passinput" placeholder="Keresés"
+                    onchange="searchBarUpdated()" onkeypress="this.onchange();" onpaste="this.onchange();"
+                    oninput="this.onchange();">
+            </div>
+            <div style="width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-content: center;
+            align-items: center;" id="mainContainer">
+            </div>
+        </div>
+    </div>
+    <div id="particles-js">
+    </div>
+
+
+    <!-- scripts -->
+    <script src="./particles.js"></script>
+    <script src="./js/particle-loader.js"></script>
+    <script src="./js/check-auth.js"></script>
+    <script src="./js/escape-html.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let filteredUsers = [];
+        let allUsers = [];
+        let filters = {
+            admin: false,
+            banned: false,
+            cantChangePassword: false,
+            neverExpire: false,
+        }
+
+        const azureUser = (username) => `
+            <div style="flex: 1">
+                <img src="./assets/azure.svg" alt="Azure" srcset="" width="45" height="45" title="Azure">
+                <h2 style="word-break: break-all;">${escapeHtml(username)}</h2>
+            </div>
+        `;
+
+        const manualUser = (username) => `
+            <div style="flex: 1">
+                <img src="./assets/manual.svg" alt="Azure" srcset="" width="45" height="45" title="Kézi/Jelszóval">
+                <h2 style="word-break: break-all;">${escapeHtml(username)}</h2>
+            </div>
+        `;
+
+        const canChangePassword = `
+            <img src="./assets/green-key.svg" alt="TUD jelszót változtatni" srcset="" width="45" class="icons" height="45" title="TUD jelszót változtatni">
+        `;
+
+        const canTChangePassword = `
+        <img src="./assets/red-key.svg" alt="NEM TUD jelszót változtatni" srcset="" width="45" class="icons" height="45" title="NEM TUD jelszót változtatni">
+        `;
+
+        const isAdmin = `
+            <img src="./assets/green-admin.svg" alt="ADMIN" srcset="" width="45" height="45" class="icons" title="ADMIN">
+        `;
+
+        const isNotAdmin = `
+            <img src="./assets/red-admin.svg" alt="NEM ADMIN" srcset="" width="45" height="45" class="icons" title="NEM ADMIN">
+        `;
+
+        const banned = `
+            <img src="./assets/banned.svg" alt="LETILTVA" srcset="" width="45" class="icons" height="45" title="LETILTVA">
+        `;
+
+        async function getAllUsers() {
+            const res = await fetch('/getAllUsers', {
+                method: 'POST',
+            });
+            const data = await res.json();
+            filteredUsers = data;
+            allUsers = data;
+            updateList(data);
+        }
+
+        async function searchButtonClicked() {
+            await Swal.fire({
+                title: 'Szűrő',
+                html: `<div>
+                    <p style="display: inline-block">Admin</p>
+                    <input type="checkbox" id="admin" class="swal2-checkbox" onchange="filters.admin = this.checked; searchBarUpdated()" ${filters.admin ? 'checked' : ''}>
+                    <br>
+                    <p style="display: inline-block">Tiltva</p>
+                    <input type="checkbox" id="banned" class="swal2-checkbox" onchange="filters.banned = this.checked; searchBarUpdated()" ${filters.banned ? 'checked' : ''}>
+                    <br>
+                    <p style="display: inline-block">Nem változtathat jelszót</p>
+                    <input type="checkbox" id="canChangePassword" class="swal2-checkbox" onchange="filters.cantChangePassword = this.checked; searchBarUpdated()" ${filters.cantChangePassword ? 'checked' : ''}>
+                    <br>
+                    <p style="display: inline-block">Soha nem törlődik</p>
+                    <input type="checkbox" id="neverExpire" class="swal2-checkbox" onchange="filters.neverExpire = this.checked; searchBarUpdated()" ${filters.neverExpire ? 'checked' : ''}>
+                </div>`,
+            });
+            searchBarUpdated();
+        }
+
+        function searchBarUpdated() {
+            const search = document.getElementById('search').value;
+            filteredUsers = allUsers.filter((user) => user.username.toLowerCase().includes(search.toLowerCase()));
+            filteredUsers = applyFilters(filteredUsers);
+            updateList(filteredUsers);
+        }
+
+        function applyFilters(data) {
+            return data.filter((user) => {
+                if (filters.admin && user.admin != 1) {
+                    return false;
+                }
+                if (filters.banned && user.banned != 1) {
+                    return false;
+                }
+                if (filters.cantChangePassword && user.allowChangePassword == 1) {
+                    return false;
+                }
+                if (filters.neverExpire && ((user.expireAfterInactiveDays != -1 && user.expireAfterInactiveDays != null) || (user.expireAtDate != "" && user.expireAtDate != null))) {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        function updateList(data) {
+            const container = document.getElementById('mainContainer');
+            container.innerHTML = '';
+            for (const item of data) {
+                let iconSet = `
+                            ${item.allowChangePassword == 1 ? canChangePassword : canTChangePassword}
+                            ${item.admin == 1 ? isAdmin : isNotAdmin}
+                `;
+                if (item.banned == 1) {
+                    iconSet = banned;
+                }
+
+                let daysUntilInactivityDelete;
+                if (item.expireAfterInactiveDays != null && item.expireAfterInactiveDays != -1 && item.expireAfterInactiveDays != "") {
+                    daysUntilInactivityDelete = (item.lastActive + item.expireAfterInactiveDays * 24 * 60 * 60 * 1000) - Date.now();
+                    daysUntilInactivityDelete = Math.floor(daysUntilInactivityDelete / (1000 * 60 * 60 * 24));
+                }
+
+                let daysUntilExpire;
+                if (item.expireAtDate != null && item.expireAtDate != "") {
+                    daysUntilExpire = item.expireAtDate - Date.now();
+                    daysUntilExpire = Math.floor(daysUntilExpire / (1000 * 60 * 60 * 24));
+                }
+
+                let deletionText = '';
+                if (daysUntilInactivityDelete != null && daysUntilExpire != null) {
+                    if (daysUntilExpire <= daysUntilInactivityDelete) {
+                        deletionText = `${daysUntilExpire} nap múlva`;
+                        if (daysUntilExpire < 0) {
+                            deletionText = 'Hamarosan törölve lesz';
+                        }
+                    } else {
+                        deletionText = `További ${daysUntilInactivityDelete} nap inaktivitás után`;
+                        if (daysUntilInactivityDelete < 0) {
+                            deletionText = 'Hamarosan törölve lesz';
+                        }
+                    }
+                } else if (daysUntilInactivityDelete != null) {
+                    deletionText = `További ${daysUntilInactivityDelete} nap inaktivitás után`;
+                    if (daysUntilInactivityDelete < 0) {
+                        deletionText = 'Hamarosan törölve lesz';
+                    }
+                } else if (daysUntilExpire != null) {
+                    deletionText = `${daysUntilExpire} nap múlva`;
+                    if (daysUntilExpire < 0) {
+                        deletionText = 'Hamarosan törölve lesz';
+                    }
+                } else {
+                    deletionText = 'Soha';
+                }
+
+
+                container.innerHTML += `
+                <div style="width: 80%; padding:10px; background-color: #EEEEEE; height: 50px; border-radius: 15px; display: flex; align-content: center; align-items: center; margin-bottom: 10px"
+                    class="userContainer" onclick="userClicked(this)" data-username="${item.username}" data-ismanual="${item.isManual}" data-admin="${item.admin}" data-allowchangepassword="${item.allowChangePassword}" data-banned="${item.banned}" data-expireafterinactivedays="${item.expireAfterInactiveDays}" data-expireatdate="${item.expireAtDate}">
+                    ${item.isManual == 1 ? manualUser(item.username) : azureUser(item.username)}
+                    <div style="flex: 1; display: flex; flex-wrap: wrap;">
+                        <div style="width: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center;">
+                            ${iconSet}
+                            <img src="./assets/clock-end.svg" srcset="" width="45" height="45" alt="Törlés időpontja" title="Törlés időpontja" class="icons">
+                            <div style="display:inline-block">
+                                <p>Törlés:</p>
+                                <p style="word-break: break-all;">${deletionText}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }
+        }
+
+        function showPassword() {
+            const pass = document.getElementById('password');
+            if (pass.type === 'password') {
+                pass.type = 'text';
+            } else {
+                pass.type = 'password';
+            }
+
+            const passAgain = document.getElementById('passwordAgain');
+            if (passAgain.type === 'password') {
+                passAgain.type = 'text';
+            } else {
+                passAgain.type = 'password';
+            }
+        }
+
+        async function userClicked(event) {
+            const res = await Swal.fire({
+                title: 'Felhasználó módosítása',
+                html: `
+                <p class="swal-ctext">Felhasználónév</p>
+                <input type="text" id="username" class="swal2-input" placeholder="Felhasználónév" value="${event.dataset.username}" disabled>
+                <p class="swal-ctext">Jelszó</p>
+                <input type="password" id="password" class="swal2-input" placeholder="Jelszó">
+                <p class="swal-ctext">Jelszó újra</p>
+                <input type="password" id="passwordAgain" class="swal2-input" placeholder="Jelszó újra">
+                <p class="swal-ctext">Inaktivitás utáni törlés (nap, üres = soha)</p>
+                <input type="number" min="1" id="expireAfterInactiveDays" class="swal2-input" placeholder="Inaktivitás utáni törlés (nap)" value="${event.dataset.expireafterinactivedays}">
+                <p class="swal-ctext">Törlés dátuma (üres = soha)</p>
+                <input type="date" id="expireAtDate" class="swal2-input" placeholder="Törlés dátuma (üres = soha)" value="${(event.dataset.expireatdate == null || event.dataset.expireatdate == 'null' || event.dataset.expireatdate == '') ? '' : new Date(parseInt(event.dataset.expireatdate)).toISOString().split('T')[0]}">
+                <div>
+                    <p style="display: inline-block">Admin</p>
+                    <input type="checkbox" id="admin" class="swal2-checkbox" ${event.dataset.admin == 1 ? 'checked' : ''}>
+                </div>
+                <div>
+                    <p style="display: inline-block">Tud jelszót változtatni</p>
+                    <input type="checkbox" id="allowChangePassword" class="swal2-checkbox" ${event.dataset.allowchangepassword == 1 ? 'checked' : ''}>
+                </div>
+                <div style="margin-top: 10px;">
+                    <p style="display: inline-block">Jelszó felfedése</p>
+                    <input type="checkbox" id="showPass" class="swal2-checkbox" onchange="showPassword(this.checked)">
+                </div>
+                <div style="margin-top: 10px;">
+                    <p style="display: inline-block; color: red">LETILTÁS</p>
+                    <input type="checkbox" id="banned" class="swal2-checkbox" ${event.dataset.banned == 1 ? 'checked' : ''} onchange="if(this.checked){ document.getElementById('admin').checked = false; document.getElementById('expireAfterInactiveDays').value = '365'; }">
+                </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Mentés',
+                cancelButtonText: 'Mégse',
+                showDenyButton: true,
+                denyButtonText: 'Törlés',
+            });
+            if (res.isConfirmed) {
+                const password = document.getElementById('password').value;
+                const passwordAgain = document.getElementById('passwordAgain').value;
+                const expireAfterInactiveDays = document.getElementById('expireAfterInactiveDays').value;
+                const expireAtDate = document.getElementById('expireAtDate').value;
+                const admin = document.getElementById('admin').checked ? 1 : 0;
+                const allowChangePassword = document.getElementById('allowChangePassword').checked ? 1 : 0;
+                const banned = document.getElementById('banned').checked ? 1 : 0;
+
+                if (expireAfterInactiveDays == event.dataset.expireafterinactivedays &&
+                    expireAtDate == event.dataset.expireatdate &&
+                    admin == event.dataset.admin &&
+                    allowChangePassword == event.dataset.allowchangepassword &&
+                    banned == event.dataset.banned &&
+                    password == '' && passwordAgain == '') {
+                    // Nothing changed
+                    return;
+                }
+
+                if (password != passwordAgain) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hiba történt!',
+                        text: 'A két jelszó nem egyezik!',
+                    });
+                    return;
+                }
+
+                if (1 < password.length && password.length < 8) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hiba történt!',
+                        text: 'A jelszó legalább 8 karakter hosszú legyen!',
+                    });
+                    return;
+                }
+
+                const res = await fetch('/updateUser', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: event.dataset.username,
+                        password: password.length > 1 ? password : null,
+                        expireAfterInactiveDays: expireAfterInactiveDays == '' ? -1 : expireAfterInactiveDays,
+                        expireAtDate: (expireAtDate == '' || expireAtDate == null) ? "" : new Date(expireAtDate).getTime(),
+                        admin,
+                        allowChangePassword,
+                        banned,
+                    }),
+                });
+                const data = await res.json();
+                if (res.status == 200) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Sikeresen módosítottad a felhasználót!',
+                    });
+                    location.reload();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hiba történt!',
+                        text: 'Kérlek próbáld újra!\n' + data.error + '\n' + data.message,
+                    });
+                }
+            }
+
+            if (res.isDenied) {
+                // Delay a few milliseconds to prevent double click
+                await new Promise(r => setTimeout(r, 100));
+                const confirm = await Swal.fire({
+                    title: 'Biztosan törölni szeretnéd a felhasználót?',
+                    html: `<p>Ez a művelet nem visszavonható!<br><br>Figyelem! Azure bejelentkezés esetén a felhasználó újra tud regisztrálni, ilyenkor inkább <strong>tiltsd le</strong> a felhasználót! <br><br> ${event.dataset.username}</p>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Igen',
+                    cancelButtonText: 'Mégse',
+                });
+
+                if (confirm.isConfirmed) {
+                    const result = await fetch('/deleteUser', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            username: event.dataset.username,
+                        }),
+                    });
+                    const data = await result.json();
+                    if (result.status == 200) {
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Sikeresen törölted a felhasználót!',
+                        });
+                        location.reload();
+                    } else {
+                        console.error(data);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Hiba történt!',
+                            text: 'Kérlek próbáld újra!\n' + data.error + '\n' + data.message,
+                        });
+                    }
+                }
+            }
+        }
+
+        async function createNewUser() {
+            const result = await Swal.fire({
+                title: 'Új felhasználó létrehozása',
+                html: `
+                <p class="swal-ctext">Felhasználónév</p>
+                <input type="text" id="username" class="swal2-input" placeholder="Felhasználónév">
+                <p class="swal-ctext">Jelszó</p>
+                <input type="password" id="password" class="swal2-input" placeholder="Jelszó">
+                <p class="swal-ctext">Jelszó újra</p>
+                <input type="password" id="passwordAgain" class="swal2-input" placeholder="Jelszó újra">
+                <p class="swal-ctext">Inaktivitás utáni törlés (nap, üres = soha)</p>
+                <input type="number" min="1" id="expireAfterInactiveDays" class="swal2-input" placeholder="Inaktivitás utáni törlés (nap)" value="100">
+                <p class="swal-ctext">Törlés dátuma (üres = soha)</p>
+                <input type="date" id="expireAtDate" class="swal2-input" placeholder="Törlés dátuma (üres = soha)">
+                <div>
+                    <p style="display: inline-block">Admin</p>
+                    <input type="checkbox" id="admin" class="swal2-checkbox" onchange="">
+                </div>
+                <div>
+                    <p style="display: inline-block">Tud jelszót változtatni</p>
+                    <input type="checkbox" id="allowChangePassword" class="swal2-checkbox" checked>
+                </div>
+                <div style="margin-top: 10px;">
+                    <p style="display: inline-block; color: red">LETILTÁS</p>
+                    <input type="checkbox" id="banned" class="swal2-checkbox">
+                </div>
+                <div style="margin-top: 10px;">
+                    <p style="display: inline-block">Jelszó felfedése</p>
+                    <input type="checkbox" id="showPass" class="swal2-checkbox" onchange="showPassword(this.checked)">
+                </div>
+                `,
+            });
+            if (result.isConfirmed) {
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const passwordAgain = document.getElementById('passwordAgain').value;
+                if (username.length < 1) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hiba történt!',
+                        text: 'Kérlek add meg a felhasználónevet!',
+                    });
+                    return;
+                }
+
+                if (password.length < 1) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hiba történt!',
+                        text: 'Kérlek add meg a jelszót!',
+                    });
+                    return;
+                }
+
+                if (password != passwordAgain) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hiba történt!',
+                        text: 'A két jelszó nem egyezik!',
+                    });
+                    return;
+                }
+
+                if (password.length < 8) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hiba történt!',
+                        text: 'A jelszó legalább 8 karakter hosszú legyen!',
+                    });
+                    return;
+                }
+
+                const expireAfterInactiveDays = document.getElementById('expireAfterInactiveDays').value;
+                const expireAtDate = document.getElementById('expireAtDate').value;
+                const admin = document.getElementById('admin').checked ? 1 : 0;
+                const allowChangePassword = document.getElementById('allowChangePassword').checked ? 1 : 0;
+                const banned = document.getElementById('banned').checked ? 1 : 0;
+
+                const res = await fetch('/createUser', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        expireAfterInactiveDays:
+                            (expireAfterInactiveDays == '' || expireAfterInactiveDays == null) ? -1 : expireAfterInactiveDays,
+                        expireAtDate: (expireAtDate == '' || expireAtDate == null) ? null : new Date(expireAtDate).getTime(),
+                        admin,
+                        allowChangePassword,
+                        banned,
+                    }),
+                });
+                const data = await res.json();
+                if (res.status == 201 || res.status == 200) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Sikeresen létrehoztad a felhasználót!',
+                    });
+                    location.reload();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hiba történt!',
+                        text: 'Kérlek próbáld újra!\n' + data.error + '\n' + data.message,
+                    });
+                }
+            }
+        }
+    </script>
+    <!-- Made by Novy -->
+</body>
+
+</html>
