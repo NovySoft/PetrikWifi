@@ -45,10 +45,6 @@ fastify.setErrorHandler(function (error, request, reply) {
     reply.code(errorResponse.statusCode).send(errorResponse);
 });
 
-fastify.get("/debug-sentry", function (request, reply) {
-    throw new Error("My first Sentry error!");
-});
-
 import oauthPlugin from '@fastify/oauth2';
 
 if (process.env.MS_CLIENT_ID == null || process.env.MS_CLIENT_SECRET == null || process.env.MS_AUTHORIZE_PATH == null || process.env.MS_TOKEN_PATH == null) {
@@ -74,7 +70,7 @@ fastify.register(oauthPlugin, {
     // register a fastify url to start the redirect flow to the service provider's OAuth2 login
     startRedirectPath: '/login/microsoft',
     // service provider redirects here after user login
-    callbackUri: 'http://localhost:3000/login/microsoft/callback'
+    callbackUri: process.env.REDIRECT_BASE + '/login/microsoft/callback'
 });
 
 fastify.get('/login/microsoft/callback', async function (request, reply) {
@@ -130,7 +126,7 @@ fastify.register(secureSession, {
 
 fastify.post('/radius/*', radius);
 fastify.get('/ping', (req, rep) => {
-    request.session.touch();
+    req.session.touch();
     rep.status(200).send('Pong!');
 });
 

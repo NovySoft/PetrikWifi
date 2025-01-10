@@ -66,11 +66,20 @@ services:
       - './certs/dh:/opt/etc/raddb/certs/dh'
       - './certs/wifi@petrik.hu.p12:/opt/etc/raddb/certs/wifi@petrik.hu.p12'
       - './certs/wifi@petrik.hu.pem:/opt/etc/raddb/certs/wifi@petrik.hu.pem'
-
+      - './freeradius/eapol_test.conf:/eapol_test.conf.template'
     command: radiusd -X
+    healthcheck:
+      test: eapol_test -c /eapol_test.conf -s $$RADTEST_SECRET || exit 1
+      interval: 30s
+      timeout: 20s
+      retries: 5
     depends_on:
       - auth_server
     restart: always
+    environment:
+      - RADTEST_USER=radtest
+      - RADTEST_PASS=radtest
+      - RADTEST_SECRET=radtest
 
   auth_server:
     platform: linux/x86_64
@@ -90,6 +99,11 @@ services:
       petrik-radius-bridge:
         ipv4_address: 172.18.1.1
     restart: always
+    healthcheck:
+      test: curl --max-time 10 -kILs --fail http://localhost:3000/ping || exit 1
+      interval: 30s
+      timeout: 20s
+      retries: 5
     environment:
       - NODE_ENV=development
       - SUPER_SECRET=Super_Secret
@@ -98,6 +112,7 @@ services:
       - MS_AUTHORIZE_PATH=/tenant/oauth2/v2.0/authorize
       - MS_TOKEN_PATH=/tenant/oauth2/v2.0/token
       - SENTRY_DSN=https://example.sentry.dsn/123456789
+      - REDIRECT_BASE=http://localhost:3000
   
 networks:
   petrik-radius-bridge:

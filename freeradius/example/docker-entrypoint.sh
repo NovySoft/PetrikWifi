@@ -31,7 +31,10 @@ chmod o-w /opt/etc/raddb/certs/*.csr
 chmod o-w /opt/etc/raddb/certs/dh
 
 rm /opt/etc/raddb/mods-enabled/files || true
+sed "s/IDHERE/$RADTEST_USER/g" eapol_test.conf.template | sed -e "s/PASSHERE/$RADTEST_PASS/g" > /eapol_test.conf
 
+apk update
+apk add wpa_supplicant
 
 # this if will check if the first argument is a flag
 # but only works if all arguments require a hyphenated flag

@@ -8,38 +8,52 @@ export default async function handler(request, reply) {
     logger.silly(request.body);
 
     if (process.env.NODE_ENV === 'production') {
-        // Check if the request is coming from the FreeRADIUS server
-        if (request.realip !== FREERADIUS_IP) {
-            reply.status(403).send({
-                error: 'Forbidden',
-                code: 'FORBIDDEN',
-                message: 'You are not allowed to access this resource.',
-            });
-            logger.warn(`RADIUS: Request from ${request.body.IP} is not an allowed IP address.`, request.body);
-            return;
-        }
+        // Healthtest User
+        if (request.body.username === 'radtest') {
+            // Check if the request is coming from the FreeRADIUS server itself
+            if (request.body.source != "02-00-00-00-00-01" || request.body.IP != "127.0.0.1") {
+                reply.status(403).send({
+                    error: 'Forbidden',
+                    code: 'FORBIDDEN',
+                    message: 'You are not allowed to access this resource.',
+                });
+                logger.warn(`RADIUS: Healthtest User Request from ${request.body.IP} is not allowed.`, request.body);
+                return;
+            }
+        } else {
+            // Check if the request is coming from the FreeRADIUS server
+            if (request.realip !== FREERADIUS_IP) {
+                reply.status(403).send({
+                    error: 'Forbidden',
+                    code: 'FORBIDDEN',
+                    message: 'You are not allowed to access this resource.',
+                });
+                logger.warn(`RADIUS: Request from ${request.body.IP} is not an allowed IP address.`, request.body);
+                return;
+            }
 
-        // Check if the request is coming from authorized NAS
-        const nas = db.prepare('SELECT * FROM APs WHERE AP = ?').get(request.body.NAS.toUpperCase());
-        if (nas == undefined || nas?.length == 0) {
-            reply.status(403).send({
-                error: 'Forbidden',
-                code: 'FORBIDDEN',
-                message: 'You are not allowed to access this resource.',
-            });
-            logger.warn(`RADIUS: Request from ${request.body.destination} is not an allowed NAS.`, request.body);
-            return;
-        }
+            // Check if the request is coming from authorized NAS
+            const nas = db.prepare('SELECT * FROM APs WHERE AP = ?').get(request.body.NAS.toUpperCase());
+            if (nas == undefined || nas?.length == 0) {
+                reply.status(403).send({
+                    error: 'Forbidden',
+                    code: 'FORBIDDEN',
+                    message: 'You are not allowed to access this resource.',
+                });
+                logger.warn(`RADIUS: Request from ${request.body.destination} is not an allowed NAS.`, request.body);
+                return;
+            }
 
-        // Check if the request is coming from the correct IP address - Mac Binding
-        if (nas.IP !== request.body.IP) {
-            reply.status(403).send({
-                error: 'Forbidden',
-                code: 'FORBIDDEN',
-                message: 'You are not allowed to access this resource.',
-            });
-            logger.warn(`RADIUS: Request from ${request.body.IP} is not an allowed IP address of ${request.body.destination}. Expected: ${nas.IP}`, request.body);
-            return;
+            // Check if the request is coming from the correct IP address - Mac Binding
+            if (nas.IP !== request.body.IP) {
+                reply.status(403).send({
+                    error: 'Forbidden',
+                    code: 'FORBIDDEN',
+                    message: 'You are not allowed to access this resource.',
+                });
+                logger.warn(`RADIUS: Request from ${request.body.IP} is not an allowed IP address of ${request.body.destination}. Expected: ${nas.IP}`, request.body);
+                return;
+            }
         }
     }
 
