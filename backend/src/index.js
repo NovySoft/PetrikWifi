@@ -16,7 +16,7 @@ await fastify.register(rateLimiter, {
 });
 
 fastify.addHook('onRequest', (request, reply, done) => {
-    request.realip = request.headers['x-real-ip'] ?? request.ip;
+    request.realip = (request.headers['x-real-ip'] ?? request.headers['cf-connecting-ip']) ?? request.ip;
     done();
 });
 
