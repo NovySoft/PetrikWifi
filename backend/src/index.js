@@ -1,3 +1,5 @@
+import "./instrument.js";
+import * as Sentry from "@sentry/node";
 import Fastify from 'fastify';
 import radius from './radius.js';
 import logger from './logger.js';
@@ -32,6 +34,7 @@ fastify.addHook('onSend', (request, reply, payload, done) => {
 fastify.setErrorHandler(function (error, request, reply) {
     // Log error
     logger.error(error);
+    Sentry.captureException(error);
 
     const errorResponse = {
         message: error.message,
@@ -40,6 +43,10 @@ fastify.setErrorHandler(function (error, request, reply) {
     };
 
     reply.code(errorResponse.statusCode).send(errorResponse);
+});
+
+fastify.get("/debug-sentry", function (request, reply) {
+    throw new Error("My first Sentry error!");
 });
 
 import oauthPlugin from '@fastify/oauth2';
