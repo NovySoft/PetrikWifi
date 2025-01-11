@@ -5,9 +5,10 @@ EXPOSE 3000
 COPY ./package.json .
 COPY ./yarn.lock .
 COPY ./secret-key .
-RUN apk add --no-cache sqlite libc6-compat curl
+RUN apk add --no-cache sqlite libc6-compat curl tzdata
 RUN yarn install
 
 ENV NODE_OPTIONS="--unhandled-rejections=strict"
+ENV TZ=Europe/Budapest
 
 CMD ["node", "."]

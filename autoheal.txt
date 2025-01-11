@@ -1,0 +1,12 @@
+# Run autoheal to restart unhealthy containers
+
+sudo docker run -d \
+    --name autoheal \
+    --restart=always \
+    -e AUTOHEAL_CONTAINER_LABEL=all \
+    -e AUTOHEAL_INTERVAL=90 \
+    -e AUTOHEAL_START_PERIOD=120 \
+    -e AUTOHEAL_DEFAULT_STOP_TIMEOUT=60 \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /etc/localtime:/etc/localtime:ro \
+    willfarrell/autoheal
