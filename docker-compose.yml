@@ -80,6 +80,7 @@ services:
       - RADTEST_USER=radtest
       - RADTEST_PASS=radtest
       - RADTEST_SECRET=radtest
+      - TZ=Europe/Budapest
 
   auth_server:
     platform: linux/x86_64

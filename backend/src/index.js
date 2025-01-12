@@ -1,7 +1,6 @@
 import "./instrument.js";
 import * as Sentry from "@sentry/node";
 import Fastify from 'fastify';
-import radius from './radius.js';
 import logger from './logger.js';
 import { initDB, db } from './database.js';
 
@@ -124,7 +123,15 @@ fastify.register(secureSession, {
     }
 });
 
-fastify.post('/radius/*', radius);
+import radius, { FREERADIUS_IP } from './radius.js';
+fastify.post('/radius/*', {
+    config: {
+        rateLimit: {
+            allowList: [FREERADIUS_IP], // DO NOT rate limit FreeRADIUS server
+        }
+    }
+}, radius);
+
 fastify.get('/ping', (req, rep) => {
     req.session.touch();
     rep.status(200).send('Pong!');

@@ -1,7 +1,7 @@
 import logger from './logger.js';
 import { db } from './database.js';
 import { SUPER_SECRET_KEY, getKeyFromPassword, decrypt } from "./encryptor.js";
-const FREERADIUS_IP = "172.18.1.2";
+export const FREERADIUS_IP = "172.18.1.2";
 
 export default async function handler(request, reply) {
     // request.body {username: 'novylevi', password: '', source: 'EA-B7-EE-4E-58-57', destination: '78-8A-20-8D-71-79:Petrik-Radius-Test', 'IP': '127.0.0.1', 'NAS': '78-8A-20-8D-71-79'}
