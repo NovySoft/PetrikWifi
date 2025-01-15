@@ -1,6 +1,6 @@
 import { db } from '../../database.js';
 
-export default async function getAllUsers(req, rep) {
+export default async function getAllDevices(req, rep) {
     if (req.session?.get('login') !== true) {
         rep.status(403).send({
             error: 'Forbidden',
@@ -21,6 +21,6 @@ export default async function getAllUsers(req, rep) {
 
     db.prepare('UPDATE Users SET lastActive = ? WHERE username = ?').run(Date.now(), req.session.get('user').userPrincipalName);
 
-    const users = db.prepare('SELECT username, isManual, allowChangePassword, admin, banned, lastActive, expireAfterInactiveDays, expireAtDate, comment FROM Users').all();
-    rep.status(200).send(users);
+    const devices = db.prepare('SELECT Devices.userID, username, device AS mac, comment, Devices.lastActive AS deviceLastActive, Users.lastActive AS userLastActive, Devices.banned AS deviceBanned, Users.banned AS userBanned FROM Devices LEFT JOIN Users ON Devices.userID = Users.userID ORDER BY Devices.userID').all();
+    rep.status(200).send(devices);
 }

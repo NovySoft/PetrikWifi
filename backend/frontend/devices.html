@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>PetrikWifi - Eszközök</title>
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" media="screen" href="./css/style.css">
+    <style>
+        @media screen and (max-width: 800px) {
+            .userContainer {
+                height: 80px !important;
+            }
+        }
+
+        @media screen and (max-width: 520px) {
+            .icons {
+                height: 30px !important;
+                width: 30px !important;
+            }
+        }
+
+        .swal-ctext {
+            margin-bottom: 0px;
+        }
+
+        .swal2-input {
+            margin-top: 0px !important;
+        }
+
+        .device {
+            background-color: #EEEEEE;
+            border-radius: 15px;
+            padding: 13px;
+            margin-bottom: 10px;
+        }
+    </style>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <script src="https://js-de.sentry-cdn.com/f0a8e95bd836b63881e5a3feb9d7f256.min.js" crossorigin="anonymous"></script>
+    <script>
+        Sentry.onLoad(function () {
+            Sentry.init({
+                // You can add any additional configuration here
+            });
+        });
+    </script>
+</head>
+
+<body onload="(async () => {
+    await checkAuth();
+    checkAdmin();
+    await getAllDevices();
+    })()">
+
+    <!-- particles.js container -->
+    <div class="dashpanel" style="height: 95vh;top:2.5%; width: 95vw;">
+        <div style="overflow-y: scroll;margin:10px;height: 98%;">
+            <h1>Admin Panel - Eszközök</h1>
+            <div style="width: 100%;
+            display: flex;
+            align-content: center;
+            justify-content: center;
+            align-items: center;">
+                <img src="./assets/filter.svg" style="cursor: pointer;" alt="" srcset="" width="30" height="30"
+                    onclick="searchButtonClicked()">
+                <input type="text" name="search" id="search" class="passinput" placeholder="Keresés"
+                    onchange="searchBarUpdated()" onkeypress="this.onchange();" onpaste="this.onchange();"
+                    oninput="this.onchange();">
+            </div>
+            <div style="width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-content: center;
+            align-items: center;" id="mainContainer">
+            </div>
+        </div>
+    </div>
+    <div id="particles-js">
+    </div>
+
+
+    <!-- scripts -->
+    <script src="./particles.js"></script>
+    <script src="./js/particle-loader.js"></script>
+    <script src="./js/check-auth.js"></script>
+    <script src="./js/escape-html.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let allDevices = [];
+        let filteredDevices = [];
+        let macCounter = {};
+
+        const userBanned = `
+            <img src="./assets/banned.svg" alt="LETILTVA" srcset="" width="45" class="icons" height="45" title="LETILTVA">
+            <p>LETILTVA</p>
+        `;
+
+        const userNormal = `
+            <img src="./assets/green-tick.svg" alt="OK" srcset="" width="45" class="icons" height="45" title="OK">
+            <p>OK</p>
+        `;
+
+        const deviceWarning = `
+            <img src="./assets/yellow-user-alert.svg" alt="OK" srcset="" width="45" class="icons" height="45" title="FIGYELEM">
+            <p>Figyelmeztetés!</p>
+        `;
+
+        const separator = `<hr style="height: 3px; width: 100%; color: black;">`;
+
+        const userTemplate = (username, comment, lastActive, isUserBanned) => `
+                <div
+                    style="margin-top: 10px; width: 80%; padding:10px; background-color: #EEEEEE; height: 50px; border-radius: 15px; display: flex; align-content: center; align-items: center; margin-bottom: 10px">
+                    <div style="flex: 1; display: flex; flex-wrap: wrap;">
+                        <div
+                            style="width: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center;">
+                            <div style="flex: 1">
+                                <img src="./assets/admin.svg" alt="User" srcset="" width="45" height="45">
+                                <h2 style="word-break: break-all;">${username}</h2>
+                            </div>
+                            <div style="flex: 1">
+                                ${isUserBanned ? userBanned : userNormal}
+                            </div>
+                            <div style="flex: 1">
+                                <p>Utoljára aktív: ${lastActive}</p>
+                                <p>Megjegyzés: ${comment ?? 'Nincs.'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        `;
+
+
+        const devicesTemplate = (mac, comment, lastActive, isUserBanned, deviceBanned, counter) => `
+                <div class="device">
+                    ${(isUserBanned || deviceBanned) ? userBanned : (counter > 1 ? deviceWarning : userNormal)}
+                    ${isUserBanned ? '<p>Felhasználó letiltva</p>' : ''}
+                    ${counter > 1 ? '<p>Az eszköz ' + counter + ' felhasználónál szerepel</p>' : ''}
+                    <br>
+                    <p>Utoljára aktív: ${lastActive}</p>
+                    <p>MAC: ${mac.replaceAll('-', ':')}</p>
+                    <p>Megjegyzés: ${comment ?? 'Nincs.'}</p>
+                </div>
+        `;
+
+        async function getAllDevices() {
+            const res = await fetch('/getAllDevices', {
+                method: 'POST',
+            });
+            const data = await res.json();
+            filteredDevices = data;
+            allDevices = data;
+
+            allDevices.forEach(element => {
+                if (macCounter[element.mac] == undefined) {
+                    macCounter[element.mac] = 1;
+                } else {
+                    macCounter[element.mac] += 1;
+                }
+            });
+
+            updateList(data);
+        }
+
+        async function updateList(data) {
+            const container = document.getElementById('mainContainer');
+            container.innerHTML = '';
+
+            let userBefore = null;
+            let devicesHtml = "";
+            for (const item of data) {
+                if (item.userID !== userBefore) {
+                    if (userBefore !== null) {
+                        // Close devices container
+                        devicesHtml += '</div>';
+                        container.innerHTML += devicesHtml;
+                    }
+
+                    container.innerHTML += separator;
+
+                    const lastActive = new Date(item.userLastActive).toLocaleString();
+                    container.innerHTML += userTemplate(item.username, item.comment, lastActive, item.userBanned);
+
+                    // Device container start
+                    devicesHtml += `<div style="padding:13px; display: flex; flex-wrap: wrap; width: 80%; justify-content: space-evenly" class="devicesContainer">`
+
+                    userBefore = item.userID;
+                }
+
+                const lastActive = new Date(item.deviceLastActive).toLocaleString();
+                devicesHtml += devicesTemplate(item.mac, item.comment, lastActive, item.userBanned, item.deviceBanned, macCounter[item.mac]);
+            }
+
+            devicesHtml += '</div>';
+            container.innerHTML += devicesHtml;
+            container.innerHTML += separator;
+        }
+
+    </script>
+    <!-- Made by Novy -->
+</body>
+
+</html>

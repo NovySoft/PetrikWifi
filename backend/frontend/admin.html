@@ -35,13 +35,15 @@
     <link rel="manifest" href="/site.webmanifest">
     <script src="https://js-de.sentry-cdn.com/f0a8e95bd836b63881e5a3feb9d7f256.min.js" crossorigin="anonymous"></script>
     <script>
-        Sentry.onLoad(function() {
-          Sentry.init({
-              // You can add any additional configuration here
+        Sentry.onLoad(function () {
+            Sentry.init({
+                // You can add any additional configuration here
             });
         });
-      </script>
+    </script>
 </head>
+
+<!-- TODO: User comment field, allowing password login -->
 
 <body onload="(async () => {
     await checkAuth();
@@ -52,7 +54,7 @@
     <!-- particles.js container -->
     <div class="dashpanel" style="height: 95vh;top:2.5%; width: 95vw;">
         <div style="overflow-y: scroll;margin:10px;height: 98%;">
-            <h1>Admin Panel</h1>
+            <h1>Admin Panel - Felhasználók</h1>
             <div style="width: 100%;
             display: flex;
             align-content: center;
@@ -60,6 +62,8 @@
             align-items: center;">
                 <img src="./assets/ap.svg" style="cursor: pointer;margin-right: 5px" alt="" srcset="" width="30"
                     height="30" onclick="window.location.href = '/aps.html'">
+                <img src="./assets/devices.svg" style="cursor: pointer;margin-right: 5px" alt="" srcset="" width="30"
+                    height="30" onclick="window.location.href = '/devices.html'">
                 <img src="./assets/createUser.svg" style="cursor: pointer;" alt="" srcset="" width="30" height="30"
                     onclick="createNewUser()">
                 <img src="./assets/filter.svg" style="cursor: pointer;" alt="" srcset="" width="30" height="30"
