@@ -76,8 +76,7 @@ authorize {
 #  The common reasons to set the Auth-Type attribute by hand
 #  is to either forcibly reject the user, or forcibly accept him.
 #
-authenticate {
-	rest
+authenticate {	
     inner-eap
 	Auth-Type CHAP {
         chap

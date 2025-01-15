@@ -1,4 +1,5 @@
 docker-compose-PROD.yml
+docker-compose-TEST.yml
 secret.txt
 
 ascii_logo_for_console.txt

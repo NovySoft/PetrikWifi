@@ -82,6 +82,31 @@ export default async function handler(request, reply) {
             return;
         }
 
+        const deviceInfo = db.prepare('SELECT * FROM Devices WHERE device = ?').all(request.body.source);
+        if (deviceInfo == undefined || deviceInfo?.length == 0) {
+            // This device is not in the database
+            db.prepare('INSERT INTO Devices (userID, device, lastActive) VALUES (?, ?, ?)').run(user.userID, request.body.source, Date.now());
+        } else {
+            // Devices is in the database
+            db.prepare('UPDATE Devices SET lastActive = ? WHERE device = ?').run(Date.now(), request.body.source);
+            
+            // This device is not associated with this user (but it is in the database)
+            if (!deviceInfo.some(device => device.userID == user.userID)) {
+                db.prepare('INSERT INTO Devices (userID, device, lastActive) VALUES (?, ?, ?)').run(user.userID, request.body.source, Date.now());
+            }    
+        }
+
+        // Check if the device is banned
+        if (deviceInfo.banned == 1 || deviceInfo.some(device => device.banned == 1)) {
+            reply.status(403).send({
+                error: 'Forbidden',
+                code: 'FORBIDDEN',
+                message: 'You are not allowed to access this resource.',
+            });
+            logger.warn(`RADIUS: Device Banned: ${request.body.source} tried to authenticate.`);
+            return;
+        }
+
         const password = Buffer.from(user.password, 'hex');
         const salt = Buffer.from(user.salt, 'hex');
         const encryptor_password = Buffer.from(`${user.username}-${SUPER_SECRET_KEY}`);
