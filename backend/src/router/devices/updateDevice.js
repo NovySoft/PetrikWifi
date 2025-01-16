@@ -1,7 +1,7 @@
 import { db } from "../../database.js";
 import logger from "../../logger.js";
 
-export default async function deleteAp(req, rep) {
+export default async function updateDevice(req, rep) {
     if (req.session?.get('login') !== true) {
         rep.status(403).send({
             error: 'Forbidden',
@@ -20,8 +20,8 @@ export default async function deleteAp(req, rep) {
         return;
     }
 
-    const { ap } = req.body;
-    if (ap === undefined || ap == '') {
+    const { userID, device, comment, banned } = req.body;
+    if (userID === undefined || device === undefined || device == '' || userID == '') {
         rep.status(400).send({
             error: 'Bad Request',
             code: 'BAD_REQUEST',
@@ -30,23 +30,20 @@ export default async function deleteAp(req, rep) {
         return;
     }
 
-    const existing = db.prepare('SELECT 1 FROM APs WHERE AP = ?').get(ap);
+    const existing = db.prepare('SELECT 1 FROM Devices WHERE device = ? AND userID = ?').get(device, userID);
     if (existing == undefined || existing?.length == 0) {
         rep.status(404).send({
             error: 'Not Found',
             code: 'NOT_FOUND',
-            message: 'AP not found.',
+            message: 'Device not found.',
         });
         return;
     }
 
-    db.prepare('DELETE FROM APs WHERE AP = ?').run(ap);
-    
-    db.prepare('UPDATE Users SET lastActive = ? WHERE username = ?').run(Date.now(), req.session.get('user').userPrincipalName);
-    logger.info(`AP Deleted: ${ap} by ${req.session.get('user').userPrincipalName}`);
-
+    db.prepare('UPDATE Devices SET comment = ?, banned = ? WHERE device = ? AND userID = ?').run(comment, banned, device, userID);
+    logger.info(`Device Updated: ${device} (ban: ${banned}) - ${comment} by ${req.session.get('user').userPrincipalName}`);
     rep.status(200).send({
         code: 'OK',
-        message: 'AP Deleted',
+        message: 'Device Updated',
     });
 }

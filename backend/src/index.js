@@ -200,6 +200,9 @@ fastify.post('/deleteAp', deleteAp);
 import getAllDevices from './router/devices/getAllDevices.js';
 fastify.post('/getAllDevices', getAllDevices);
 
+import updateDevice from "./router/devices/updateDevice.js";
+fastify.post('/updateDevice', updateDevice);
+
 import fastifyStatic from '@fastify/static';
 import { fileURLToPath } from 'url';
 import path from 'path';

@@ -93,6 +93,7 @@
         let allDevices = [];
         let filteredDevices = [];
         let macCounter = {};
+        let blockedDevices = [];
 
         const userBanned = `
             <img src="./assets/banned.svg" alt="LETILTVA" srcset="" width="45" class="icons" height="45" title="LETILTVA">
@@ -134,11 +135,12 @@
         `;
 
 
-        const devicesTemplate = (mac, comment, lastActive, isUserBanned, deviceBanned, counter) => `
-                <div class="device">
-                    ${(isUserBanned || deviceBanned) ? userBanned : (counter > 1 ? deviceWarning : userNormal)}
+        const devicesTemplate = (mac, comment, lastActive, isUserBanned, deviceBanned, counter, userID) => `
+                <div class="device" onclick="devicePressed(this)" style="cursor: pointer" data-mac="${mac}" data-comment="${comment ?? ''}" data-banned="${deviceBanned}" data-userid="${userID}">
+                    ${(isUserBanned || deviceBanned || blockedDevices.includes(mac)) ? userBanned : (counter > 1 ? deviceWarning : userNormal)}
                     ${isUserBanned ? '<p>Felhasználó letiltva</p>' : ''}
                     ${counter > 1 ? '<p>Az eszköz ' + counter + ' felhasználónál szerepel</p>' : ''}
+                    ${(blockedDevices.includes(mac) && !deviceBanned) ? '<p>Ez az eszköz más felhasználónál van letiltva!</p>' : ''}
                     <br>
                     <p>Utoljára aktív: ${lastActive}</p>
                     <p>MAC: ${mac.replaceAll('-', ':')}</p>
@@ -160,6 +162,10 @@
                 } else {
                     macCounter[element.mac] += 1;
                 }
+
+                if (element.deviceBanned == 1) {
+                    blockedDevices.push(element.mac);
+                }
             });
 
             updateList(data);
@@ -177,12 +183,13 @@
                         // Close devices container
                         devicesHtml += '</div>';
                         container.innerHTML += devicesHtml;
+                        devicesHtml = '';
                     }
 
                     container.innerHTML += separator;
 
                     const lastActive = new Date(item.userLastActive).toLocaleString();
-                    container.innerHTML += userTemplate(item.username, item.comment, lastActive, item.userBanned);
+                    container.innerHTML += userTemplate(item.username, item.userComment, lastActive, item.userBanned);
 
                     // Device container start
                     devicesHtml += `<div style="padding:13px; display: flex; flex-wrap: wrap; width: 80%; justify-content: space-evenly" class="devicesContainer">`
@@ -191,7 +198,7 @@
                 }
 
                 const lastActive = new Date(item.deviceLastActive).toLocaleString();
-                devicesHtml += devicesTemplate(item.mac, item.comment, lastActive, item.userBanned, item.deviceBanned, macCounter[item.mac]);
+                devicesHtml += devicesTemplate(item.mac, item.deviceComment, lastActive, item.userBanned, item.deviceBanned, macCounter[item.mac], item.userID);
             }
 
             devicesHtml += '</div>';
@@ -199,6 +206,70 @@
             container.innerHTML += separator;
         }
 
+
+        async function devicePressed(event) {
+            const res = await Swal.fire({
+                title: 'Eszköz műveletek',
+                html: `
+                    <p>MAC: ${event.dataset.mac.replaceAll('-', ':')}</p><br>
+                    <p class="swal-ctext">Megjegyzés</p>
+                    <textarea id="comment" class="swal2-input" placeholder="Megjegyzés">${event.dataset.comment ?? ''}</textarea>
+                    <br>
+                    <div style="margin-top: 10px;">
+                        <p style="display: inline-block; color: red">LETILTÁS</p>
+                        <input type="checkbox" id="banned" class="swal2-checkbox" ${event.dataset.banned == 1 ? 'checked' : ''}>
+                    </div>
+                `,
+                showCancelButton: true,
+                cancelButtonText: 'Mégse',
+            });
+            const banned = document.getElementById('banned').checked;
+            const comment = document.getElementById('comment').value;
+            if (res.isConfirmed) {
+                if (banned) {
+                    await new Promise(r => setTimeout(r, 100));
+                    const res2 = await Swal.fire({
+                        icon: 'warning',
+                        title: 'Figyelem!',
+                        text: 'Biztosan letiltod ezt az eszközt? Ez a mac cím ezek után semmilyen fiókkal nem fog tudni csatlakozni!',
+                        showCancelButton: true,
+                        cancelButtonText: 'Mégse',
+                    });
+                    if (!res2.isConfirmed) {
+                        return;
+                    }
+                }
+
+                const result = await fetch('/updateDevice', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userID: event.dataset.userid,
+                        device: event.dataset.mac,
+                        mac: event.dataset.mac,
+                        comment: comment,
+                        banned: banned == true ? 1 : 0,
+                    }),
+                });
+
+                if (result.status == 200) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Siker!',
+                    });
+                    location.reload();
+                } else {
+                    console.error(data);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hiba történt!',
+                        text: 'Kérlek próbáld újra!\n' + data.error + '\n' + data.message,
+                    });
+                }
+            }
+        }
     </script>
     <!-- Made by Novy -->
 </body>

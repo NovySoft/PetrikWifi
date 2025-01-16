@@ -21,6 +21,6 @@ export default async function getAllDevices(req, rep) {
 
     db.prepare('UPDATE Users SET lastActive = ? WHERE username = ?').run(Date.now(), req.session.get('user').userPrincipalName);
 
-    const devices = db.prepare('SELECT Devices.userID, username, device AS mac, comment, Devices.lastActive AS deviceLastActive, Users.lastActive AS userLastActive, Devices.banned AS deviceBanned, Users.banned AS userBanned FROM Devices LEFT JOIN Users ON Devices.userID = Users.userID ORDER BY Devices.userID').all();
+    const devices = db.prepare('SELECT Devices.userID, username, device AS mac, Devices.comment AS deviceComment, Users.comment as userComment, Devices.lastActive AS deviceLastActive, Users.lastActive AS userLastActive, Devices.banned AS deviceBanned, Users.banned AS userBanned FROM Devices LEFT JOIN Users ON Devices.userID = Users.userID ORDER BY Devices.userID').all();
     rep.status(200).send(devices);
 }

@@ -31,7 +31,7 @@ export default async function updateAp(req, rep) {
     }
 
     const existing = db.prepare('SELECT 1 FROM APs WHERE AP = ?').get(ap);
-    if (existing == undefined || existing?.length > 0) {
+    if (existing == undefined || existing?.length == 0) {
         rep.status(404).send({
             error: 'Not Found',
             code: 'NOT_FOUND',
