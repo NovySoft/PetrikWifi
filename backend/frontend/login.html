@@ -13,12 +13,12 @@
     <link rel="manifest" href="/site.webmanifest">
     <script src="https://js-de.sentry-cdn.com/f0a8e95bd836b63881e5a3feb9d7f256.min.js" crossorigin="anonymous"></script>
     <script>
-        Sentry.onLoad(function() {
-          Sentry.init({
-              // You can add any additional configuration here
+        Sentry.onLoad(function () {
+            Sentry.init({
+                // You can add any additional configuration here
             });
         });
-      </script>
+    </script>
 </head>
 
 <body onload="(async () => {
@@ -72,6 +72,24 @@
             const data = await response.json();
             if (data.code === "OK") {
                 window.location.href = '/dashboard.html';
+            } else if (data.code == 'NOT_FOUND' || data.code == 'WRONG_PASSWORD') {
+                Swal.fire({
+                    title: "HIBA!",
+                    text: "Hibás felhasználónév vagy jelszó!",
+                    icon: "error",
+                });
+            } else if (data.code == "BANNED") {
+                Swal.fire({
+                    title: "HIBA!",
+                    text: "A fiókja ki van tiltva! Lépjen kapcsolatba az adminisztrátorral!",
+                    icon: "error",
+                });
+            } else if (data.code == 'NOT_MANUAL') {
+                Swal.fire({
+                    title: "HIBA!",
+                    text: "Amennyiben rendelkezel iskolai fiókkal azzal lépj be! Vagy lehetséges, hogy fiókodat nem módosíthatod! Amennyiben szerinted ez egy hiba, lépj kapcsolatba az adminisztrátorral!",
+                    icon: "error",
+                });
             } else {
                 Swal.fire({
                     title: "HIBA!",
