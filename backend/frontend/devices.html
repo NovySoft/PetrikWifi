@@ -94,6 +94,10 @@
         let filteredDevices = [];
         let macCounter = {};
         let blockedDevices = [];
+        let filters = {
+            banned: false,
+            multiple: false,
+        }
 
         const userBanned = `
             <img src="./assets/banned.svg" alt="LETILTVA" srcset="" width="45" class="icons" height="45" title="LETILTVA">
@@ -269,6 +273,49 @@
                     });
                 }
             }
+        }
+
+        function searchBarUpdated() {
+            const search = document.getElementById('search').value;
+            filteredDevices = allDevices.filter((item) => {
+                return item.mac.replaceAll('-', ':').toLowerCase().includes(search.toLowerCase()) ||
+                    item.username.toLowerCase().includes(search.toLowerCase()) ||
+                    item.userComment?.toLowerCase().includes(search.toLowerCase()) ||
+                    item.deviceComment?.toLowerCase().includes(search.toLowerCase());
+            });
+            filteredDevices.sort((a, b) => a.userID - b.userID);
+
+            filteredDevices = applyFilters(filteredDevices);
+
+            updateList(filteredDevices);
+        }
+
+        function applyFilters(data) {
+            return data.filter(x => {
+                if (filters.banned && x.deviceBanned == 0) {
+                    return false;
+                }
+                if (filters.multiple && macCounter[x.mac] <= 1) {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        function searchButtonClicked() {
+            Swal.fire({
+                title: 'Szűrők',
+                html: `
+                    <div style="margin-top: 10px;">
+                        <p style="display: inline-block; color: red">LETILTOTT</p>
+                        <input type="checkbox" id="banned" class="swal2-checkbox" onchange="filters.banned = this.checked; searchBarUpdated();" ${filters.banned ? 'checked' : ''}>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <p style="display: inline-block; color: #f9a825">TÖBB FELHASZNÁLÓ</p>
+                        <input type="checkbox" id="multiple" class="swal2-checkbox" onchange="filters.multiple = this.checked; searchBarUpdated();" ${filters.multiple ? 'checked' : ''}>
+                    </div>
+                `,
+            });
         }
     </script>
     <!-- Made by Novy -->
