@@ -91,6 +91,10 @@ export default async function updateUser(req, res) {
         update.comment = req.body.comment;
     }
 
+    if (req.body.isManual != undefined) {
+        update.isManual = req.body.isManual ? 1 : 0;
+    }
+
     db.prepare(`UPDATE Users SET ${Object.keys(update).map(key => `${key} = ?`).join(', ')}, lastActive = ? WHERE username = ?`).run(
         ...Object.values(update),
         Date.now(),

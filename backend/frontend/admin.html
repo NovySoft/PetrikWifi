@@ -43,8 +43,6 @@
     </script>
 </head>
 
-<!-- TODO: Allowing password login -->
-
 <body onload="(async () => {
     await checkAuth();
     checkAdmin();
@@ -243,7 +241,7 @@
 
                 container.innerHTML += `
                 <div style="width: 80%; padding:10px; background-color: #EEEEEE; height: 50px; border-radius: 15px; display: flex; align-content: center; align-items: center; margin-bottom: 10px"
-                    class="userContainer" onclick="userClicked(this)" data-comment="${escapeHtml(item.comment ?? '')}" data-username="${item.username}" data-ismanual="${item.isManual}" data-admin="${item.admin}" data-allowchangepassword="${item.allowChangePassword}" data-banned="${item.banned}" data-expireafterinactivedays="${item.expireAfterInactiveDays}" data-expireatdate="${item.expireAtDate}">
+                    class="userContainer" onclick="userClicked(this)" data-ismanual="${item.isManual}" data-comment="${escapeHtml(item.comment ?? '')}" data-username="${item.username}" data-ismanual="${item.isManual}" data-admin="${item.admin}" data-allowchangepassword="${item.allowChangePassword}" data-banned="${item.banned}" data-expireafterinactivedays="${item.expireAfterInactiveDays}" data-expireatdate="${item.expireAtDate}">
                     ${item.isManual == 1 ? manualUser(item.username) : azureUser(item.username)}
                     <div style="flex: 0.5; display: flex; flex-direction: column">
                         <p>Komment:</p>
@@ -306,6 +304,10 @@
                     <input type="checkbox" id="admin" class="swal2-checkbox" ${event.dataset.admin == 1 ? 'checked' : ''}>
                 </div>
                 <div>
+                    <p style="display: inline-block">Webes felületre jelszóval jelentkezik be</p>
+                    <input type="checkbox" id="manual" class="swal2-checkbox" ${event.dataset.ismanual == 1 ? 'checked' : ''} onchange="if(!this.checked && ${!event.dataset.username.toLowerCase().includes('@petrik.hu')}){ alert('Figyelem! Ezt kikapcsolva a felhasználó nem fog tudni belépni erre a webes felületre semmilyen módon!') } if (this.checked && ${event.dataset.username.toLowerCase().includes('@petrik.hu')}) { alert('Figyelem! Ez a felhasználó nagy valószínűséggel Azure felhasználó, ezen opció bekapcsolása gyengíti a fiókját. Ha lehetséges maradjunk az Azure bejelentkezésnél!') }">
+                </div>
+                <div>
                     <p style="display: inline-block">Tud jelszót változtatni</p>
                     <input type="checkbox" id="allowChangePassword" class="swal2-checkbox" ${event.dataset.allowchangepassword == 1 ? 'checked' : ''}>
                 </div>
@@ -335,6 +337,7 @@
                 const allowChangePassword = document.getElementById('allowChangePassword').checked ? 1 : 0;
                 const banned = document.getElementById('banned').checked ? 1 : 0;
                 const comment = document.getElementById('comment').value;
+                const isManual = document.getElementById('manual').checked ? 1 : 0;
 
                 if (expireAfterInactiveDays == event.dataset.expireafterinactivedays &&
                     expireAtDate == event.dataset.expireatdate &&
@@ -342,6 +345,7 @@
                     allowChangePassword == event.dataset.allowchangepassword &&
                     banned == event.dataset.banned &&
                     comment == event.dataset.comment &&
+                    isManual == event.dataset.ismanual &&
                     password == '' && passwordAgain == '') {
                     // Nothing changed
                     return;
@@ -379,6 +383,7 @@
                         allowChangePassword,
                         banned,
                         comment,
+                        isManual
                     }),
                 });
                 const data = await res.json();
