@@ -43,7 +43,7 @@
     </script>
 </head>
 
-<!-- TODO: Allowing password login, warning when editing radtest user-->
+<!-- TODO: Allowing password login -->
 
 <body onload="(async () => {
     await checkAuth();
@@ -281,6 +281,13 @@
         }
 
         async function userClicked(event) {
+            if (event.dataset.username == 'radtest') {
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'Figyelem!',
+                    text: 'A radtest felhasználó a szerver állapotát figyeli! Módosítása problémákat okozhat!',
+                });
+            }
             const res = await Swal.fire({
                 title: 'Felhasználó módosítása',
                 html: `
