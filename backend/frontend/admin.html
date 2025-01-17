@@ -43,7 +43,7 @@
     </script>
 </head>
 
-<!-- TODO: User comment field, allowing password login -->
+<!-- TODO: Allowing password login, warning when editing radtest user-->
 
 <body onload="(async () => {
     await checkAuth();
@@ -166,7 +166,7 @@
 
         function searchBarUpdated() {
             const search = document.getElementById('search').value;
-            filteredUsers = allUsers.filter((user) => user.username.toLowerCase().includes(search.toLowerCase()));
+            filteredUsers = allUsers.filter((user) => user.username.toLowerCase().includes(search.toLowerCase()) || user.comment?.toLowerCase().includes(search.toLowerCase()));
             filteredUsers = applyFilters(filteredUsers);
             updateList(filteredUsers);
         }
@@ -243,8 +243,12 @@
 
                 container.innerHTML += `
                 <div style="width: 80%; padding:10px; background-color: #EEEEEE; height: 50px; border-radius: 15px; display: flex; align-content: center; align-items: center; margin-bottom: 10px"
-                    class="userContainer" onclick="userClicked(this)" data-username="${item.username}" data-ismanual="${item.isManual}" data-admin="${item.admin}" data-allowchangepassword="${item.allowChangePassword}" data-banned="${item.banned}" data-expireafterinactivedays="${item.expireAfterInactiveDays}" data-expireatdate="${item.expireAtDate}">
+                    class="userContainer" onclick="userClicked(this)" data-comment="${escapeHtml(item.comment ?? '')}" data-username="${item.username}" data-ismanual="${item.isManual}" data-admin="${item.admin}" data-allowchangepassword="${item.allowChangePassword}" data-banned="${item.banned}" data-expireafterinactivedays="${item.expireAfterInactiveDays}" data-expireatdate="${item.expireAtDate}">
                     ${item.isManual == 1 ? manualUser(item.username) : azureUser(item.username)}
+                    <div style="flex: 0.5; display: flex; flex-direction: column">
+                        <p>Komment:</p>
+                        <p style="word-break: break-all;">${item.comment ?? 'Nincs'}</p>
+                    </div>
                     <div style="flex: 1; display: flex; flex-wrap: wrap;">
                         <div style="width: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center;">
                             ${iconSet}
@@ -306,6 +310,8 @@
                     <p style="display: inline-block; color: red">LETILTÁS</p>
                     <input type="checkbox" id="banned" class="swal2-checkbox" ${event.dataset.banned == 1 ? 'checked' : ''} onchange="if(this.checked){ document.getElementById('admin').checked = false; document.getElementById('expireAfterInactiveDays').value = '365'; }">
                 </div>
+                <p class="swal-ctext">Megjegyzés</p>
+                <textarea id="comment" class="swal2-textarea" placeholder="Megjegyzés">${event.dataset.comment ?? ''}</textarea>
                 `,
                 showCancelButton: true,
                 confirmButtonText: 'Mentés',
@@ -321,12 +327,14 @@
                 const admin = document.getElementById('admin').checked ? 1 : 0;
                 const allowChangePassword = document.getElementById('allowChangePassword').checked ? 1 : 0;
                 const banned = document.getElementById('banned').checked ? 1 : 0;
+                const comment = document.getElementById('comment').value;
 
                 if (expireAfterInactiveDays == event.dataset.expireafterinactivedays &&
                     expireAtDate == event.dataset.expireatdate &&
                     admin == event.dataset.admin &&
                     allowChangePassword == event.dataset.allowchangepassword &&
                     banned == event.dataset.banned &&
+                    comment == event.dataset.comment &&
                     password == '' && passwordAgain == '') {
                     // Nothing changed
                     return;
@@ -363,6 +371,7 @@
                         admin,
                         allowChangePassword,
                         banned,
+                        comment,
                     }),
                 });
                 const data = await res.json();

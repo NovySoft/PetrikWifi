@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>PetrikWifi - Eszközök</title>
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" media="screen" href="./css/style.css">
+    <style>
+        @media screen and (max-width: 800px) {
+            .userContainer {
+                height: 80px !important;
+            }
+        }
+
+        @media screen and (max-width: 520px) {
+            .icons {
+                height: 30px !important;
+                width: 30px !important;
+            }
+        }
+
+        .swal-ctext {
+            margin-bottom: 0px;
+        }
+
+        .swal2-input {
+            margin-top: 0px !important;
+        }
+
+        .device {
+            background-color: #EEEEEE;
+            border-radius: 15px;
+            padding: 13px;
+            margin-bottom: 10px;
+        }
+    </style>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <script src="https://js-de.sentry-cdn.com/f0a8e95bd836b63881e5a3feb9d7f256.min.js" crossorigin="anonymous"></script>
+    <script>
+        Sentry.onLoad(function () {
+            Sentry.init({
+                // You can add any additional configuration here
+            });
+        });
+    </script>
+</head>
+
+<body onload="(async () => {
+    await checkAuth();
+    await getSelfevices();
+    })()">
+
+    <!-- particles.js container -->
+    <div class="dashpanel" style="height: 95vh;top:2.5%; width: 95vw;">
+        <div style="overflow-y: scroll;margin:10px;height: 98%;">
+            <p>Azok az eszközök, amikkel a felhasználód csatlakozott a hálózathoz:</p>
+            <div style="width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-content: center;
+            align-items: center;" id="mainContainer">
+                <div id="devicesContainer"
+                    style="padding:13px; display: flex; flex-wrap: wrap; width: 80%; justify-content: space-evenly"
+                    class="devicesContainer">
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="particles-js">
+    </div>
+
+
+    <!-- scripts -->
+    <script src="./particles.js"></script>
+    <script src="./js/particle-loader.js"></script>
+    <script src="./js/check-auth.js"></script>
+    <script src="./js/escape-html.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let allDevices = [];
+        let otherDevices = [];
+
+        const userBanned = `
+            <img src="./assets/banned.svg" alt="LETILTVA" srcset="" width="45" class="icons" height="45" title="LETILTVA">
+            <p>LETILTVA</p>
+        `;
+
+        const userNormal = `
+            <img src="./assets/green-tick.svg" alt="OK" srcset="" width="45" class="icons" height="45" title="OK">
+            <p>OK</p>
+        `;
+
+        const deviceWarning = `
+            <img src="./assets/yellow-user-alert.svg" alt="OK" srcset="" width="45" class="icons" height="45" title="FIGYELEM">
+            <p>Figyelmeztetés!</p>
+        `;
+
+
+        const devicesTemplate = (mac, lastActive, isUserBanned, deviceBanned, counter, otherUsers, isOtherBanned) => `
+                <div class="device">
+                    ${(isUserBanned || deviceBanned || isOtherBanned) ? userBanned : (counter > 0 ? deviceWarning : userNormal)}
+                    ${isUserBanned ? '<p>Felhasználód le van tiltva</p>' : ''}
+                    ${isOtherBanned ? '<p>Eszközöd egy másik felhasználón keresztül van letiltva</p>' : ''}
+                    <p>MAC: ${mac}</p>
+                    <p>Utolsó aktivitás: ${lastActive}</p>
+                    <br>
+                    <p style="color: #f9a825">${counter > 0 ? 'Több felhasználó is csatlakozott ezzel az eszközzel:<br>' + otherUsers.join('<br>') : ''}</p>
+                </div>
+        `;
+
+        async function getSelfevices() {
+            const res = await fetch('/getSelfDevices', {
+                method: 'POST',
+            });
+            const data = await res.json();
+            allDevices = data.devices;
+            otherDevices = data.others;
+
+            updateList(allDevices, otherDevices);
+        }
+
+        async function updateList(allDevices, otherDevices) {
+            const container = document.getElementById('devicesContainer');
+            container.innerHTML = '';
+
+            for (const item of allDevices) {
+                const otherDeviceMatch = otherDevices.filter((device) => device.mac === item.mac);
+                const isOtherBanned = otherDeviceMatch.some((device) => device.banned);
+                const lastActive = new Date(item.lastActive).toLocaleString();
+                container.innerHTML += devicesTemplate(item.mac, lastActive, window.me.isBanned, item.banned, otherDeviceMatch.length, otherDeviceMatch.map(x => `${x.username} (${new Date(item.lastActive).toLocaleString()})`), isOtherBanned);
+            }
+        }
+    </script>
+    <!-- Made by Novy -->
+</body>
+
+</html>

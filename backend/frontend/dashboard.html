@@ -26,6 +26,7 @@
     document.getElementById('title').innerText = `Hello, ${window.me?.givenName}!`;
     if (window.me?.isAdmin) {
         document.getElementById('admin').classList.remove('hide');
+        document.getElementById('devices').classList.add('hide');
     }
 
     if (window.me?.allowChangePassword == null) {
@@ -51,6 +52,12 @@
         };
         /* Change text */
         passContainer.querySelector('p').innerHTML = 'Jelszó változtatás <br> nem engedélyezett';
+    } else if (window.me.isBanned == 1) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Fiókod le van tiltva!',
+            text: 'Kérlek fordulj az adminisztrátorhoz!',
+        });
     }
 
     })()">
@@ -66,6 +73,12 @@
                     onclick="window.location.href = './password.html'" id="passContainer">
                     <img id="passIcon" src="./assets/password.svg" alt="" srcset="" style="height: 50%;">
                     <p style="margin-top: 10px;">Regisztráció<br>Jelszó változtatás</p>
+                </div>
+                <div id="devices"
+                    style="height: 100%; max-width: 50%; display: flex; flex-direction: column; justify-content: center; cursor: pointer;"
+                    onclick="window.location.href = './selfDevices.html'">
+                    <img src="./assets/devices.svg" alt="" srcset="" style="height: 50%;">
+                    <p>Eszközeim</p>
                 </div>
                 <div id="admin" class="hide"
                     style="height: 100%; max-width: 50%; display: flex; flex-direction: column; justify-content: center; cursor: pointer;"

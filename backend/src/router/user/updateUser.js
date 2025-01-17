@@ -87,6 +87,10 @@ export default async function updateUser(req, res) {
         update.banned = req.body.banned ? 1 : 0;
     }
 
+    if (req.body.comment != undefined) {
+        update.comment = req.body.comment;
+    }
+
     db.prepare(`UPDATE Users SET ${Object.keys(update).map(key => `${key} = ?`).join(', ')}, lastActive = ? WHERE username = ?`).run(
         ...Object.values(update),
         Date.now(),
