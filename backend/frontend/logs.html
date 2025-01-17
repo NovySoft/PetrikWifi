@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>PetrikWifi - Eszközök</title>
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" media="screen" href="./css/style.css">
+    <style>
+        @media screen and (max-width: 800px) {
+            .userContainer {
+                height: 80px !important;
+            }
+        }
+
+        @media screen and (max-width: 520px) {
+            .icons {
+                height: 30px !important;
+                width: 30px !important;
+            }
+        }
+
+        .swal-ctext {
+            margin-bottom: 0px;
+        }
+
+        .swal2-input {
+            margin-top: 0px !important;
+        }
+
+        .device {
+            background-color: #EEEEEE;
+            border-radius: 15px;
+            padding: 13px;
+            margin-bottom: 10px;
+        }
+    </style>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <script src="https://js-de.sentry-cdn.com/f0a8e95bd836b63881e5a3feb9d7f256.min.js" crossorigin="anonymous"></script>
+    <script>
+        Sentry.onLoad(function () {
+            Sentry.init({
+                // You can add any additional configuration here
+            });
+        });
+    </script>
+</head>
+
+<body onload="(async () => {
+    await checkAuth();
+    await getLogs();
+    })()">
+
+    <!-- particles.js container -->
+    <div class="dashpanel" style="height: 95vh;top:2.5%; width: 95vw;">
+        <div style="overflow-y: scroll;margin:10px;height: 98%;">
+            <p>Elérhető log fájlok:</p>
+            <div style="width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-content: center;
+            align-items: center;" id="mainContainer">
+                <div id="logsContainer"
+                    style="padding:13px; display: flex; flex-wrap: wrap; width: 80%; justify-content: space-evenly"
+                    class="devicesContainer">
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="particles-js">
+    </div>
+
+
+    <!-- scripts -->
+    <script src="./particles.js"></script>
+    <script src="./js/particle-loader.js"></script>
+    <script src="./js/check-auth.js"></script>
+    <script src="./js/escape-html.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let files = [];
+
+        async function getLogs() {
+            const response = await fetch('/logs/', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            const data = await response.json();
+            files = data.files;
+            files.sort((a, b) => {
+                return a.replace('ERRORS-', "").localeCompare(b.replace('ERRORS-', ""));
+            });
+
+            const logsContainer = document.getElementById('logsContainer');
+            logsContainer.innerHTML = '';
+            for (const file of files) {
+                logsContainer.innerHTML += `
+                    <div style="padding:10px; background-color: #EEEEEE; border-radius: 15px; display: flex; align-content: center; flex-direction: column; align-items: center; margin: 10px"
+                        class="userContainer" onclick="window.location.href = '/logs/${file}'">
+                        <img src="./assets/${file.toLowerCase().includes('error') ? 'file-alert.svg' : (file.toLowerCase().includes('log') ? 'file-document-multiple.svg' : 'file-multiple.svg')}" srcset="" width="45" height="45" alt="Hibák" title="Hibák"
+                            class="icons">
+                        <p style="margin: 3px;">${file}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>

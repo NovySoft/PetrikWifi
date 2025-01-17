@@ -215,6 +215,18 @@ fastify.register(fastifyStatic, {
     root: path.join(__dirname, '../frontend'),
 });
 
+fastify.register(fastifyStatic, {
+    root: path.join(__dirname, '../logs'),
+    prefix: '/logs/',
+    decorateReply: false, // the reply decorator has been added by the first plugin registration,
+    index: false,
+    list: true, // List all files in the directory
+    allowedPath: (path, root, req) => {
+        // Only allow admins to access logs
+        return req.session?.get('login') === true && req.session.get('user').isAdmin === true;
+    }
+});
+
 import { Cron } from 'croner';
 import { cleanDatabase } from './databaseCleaner.js';
 // Every minute: '* * * * *'
@@ -224,6 +236,7 @@ const job = new Cron('0 2 * * *', async () => {
     const time = Date.now();
     await cleanDatabase();
     logger.info('Database cleaning finished. Took ' + (Date.now() - time) + 'ms.');
+    //TODO Backup database
 });
 
 async function main() {
