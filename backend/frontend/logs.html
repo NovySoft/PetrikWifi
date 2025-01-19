@@ -95,7 +95,7 @@
             const data = await response.json();
             files = data.files;
             files.sort((a, b) => {
-                return a.replace('ERRORS-', "").localeCompare(b.replace('ERRORS-', ""));
+                return b.replace('ERRORS-', "").localeCompare(a.replace('ERRORS-', ""));
             });
 
             const logsContainer = document.getElementById('logsContainer');

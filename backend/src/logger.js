@@ -2,14 +2,14 @@ import { Logger } from "tslog";
 import { createStream } from "rotating-file-stream";
 
 const pad = num => (num > 9 ? "" : "0") + num;
-const fileNameGenerator = (_) => {
-    const time = new Date();
+const fileNameGenerator = (time, index) => {
+    if (!time) return "./logs/MAIN.log";
 
     return `./logs/${time.getFullYear()}-${pad(time.getMonth() + 1)}-${pad(time.getDate())}.log`;
 };
 
-const errFileNameGenerator = (_) => {
-    const time = new Date();
+const errFileNameGenerator = (time, index) => {
+    if (!time) return "./logs/ERROS-MAIN.log";
 
     return `./logs/ERRORS-${time.getFullYear()}-${pad(time.getMonth() + 1)}-${pad(time.getDate())}.log`;
 };
@@ -17,10 +17,14 @@ const errFileNameGenerator = (_) => {
 const stream = createStream(fileNameGenerator, {
     interval: "1d", // rotate daily
     maxFiles: 90, // Keep 90 days of logs
+    initialRotation: true,
+    history: "logs-history.txt",
 });
 const errStream = createStream(errFileNameGenerator, {
     interval: "1d", // rotate daily
     maxFiles: 90, // Keep 90 days of logs
+    initialRotation: true,
+    history: "errors-history.txt",
 });
 
 const logger = new Logger({
