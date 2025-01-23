@@ -22,7 +22,15 @@
 </head>
 
 <body onload="(async () => {
-    await checkAuth(true, true);
+    showLoading();
+    try {
+        await checkAuth(true, true);
+    } catch(err) {
+        console.error(err);
+        Sentry.captureException(err);
+    } finally {
+        hideLoading();
+    }
     })()">
 
     <!-- particles.js container -->
@@ -49,6 +57,7 @@
 
 
     <!-- scripts -->
+    <script src="./js/loading-spinner.js"></script>
     <script src="./particles.js"></script>
     <script src="./js/particle-loader.js"></script>
     <script src="./js/check-auth.js"></script>
@@ -56,49 +65,66 @@
 
     <script>
         async function login() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+            showLoading()
+            try {
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
 
-            const response = await fetch('/userlogin', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    username,
-                    password
-                })
-            });
-            const data = await response.json();
-            if (data.code === "OK") {
-                window.location.href = '/dashboard.html';
-            } else if (data.code == 'NOT_FOUND' || data.code == 'WRONG_PASSWORD') {
+                const response = await fetch('/userlogin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password
+                    })
+                });
+                const data = await response.json();
+                if (data.code === "OK") {
+                    window.location.href = '/dashboard.html';
+                } else if (data.code == 'NOT_FOUND' || data.code == 'WRONG_PASSWORD') {
+                    Swal.fire({
+                        title: "HIBA!",
+                        text: "Hibás felhasználónév vagy jelszó!",
+                        icon: "error",
+                    });
+                } else if (data.code == "BANNED") {
+                    Swal.fire({
+                        title: "HIBA!",
+                        text: "A fiókja ki van tiltva! Lépjen kapcsolatba az adminisztrátorral!",
+                        icon: "error",
+                    });
+                } else if (data.code == 'NOT_MANUAL') {
+                    Swal.fire({
+                        title: "HIBA!",
+                        text: "Amennyiben rendelkezel iskolai fiókkal azzal lépj be! Vagy lehetséges, hogy fiókodat nem módosíthatod! Amennyiben szerinted ez egy hiba, lépj kapcsolatba az adminisztrátorral!",
+                        icon: "error",
+                    });
+                } else {
+                    Swal.fire({
+                        title: "HIBA!",
+                        text: data.message,
+                        icon: "error",
+                    });
+                }
+            } catch (err) {
+                Sentry.captureException(err);
+                console.error(err);
                 Swal.fire({
                     title: "HIBA!",
-                    text: "Hibás felhasználónév vagy jelszó!",
+                    text: err.toString(),
                     icon: "error",
                 });
-            } else if (data.code == "BANNED") {
-                Swal.fire({
-                    title: "HIBA!",
-                    text: "A fiókja ki van tiltva! Lépjen kapcsolatba az adminisztrátorral!",
-                    icon: "error",
-                });
-            } else if (data.code == 'NOT_MANUAL') {
-                Swal.fire({
-                    title: "HIBA!",
-                    text: "Amennyiben rendelkezel iskolai fiókkal azzal lépj be! Vagy lehetséges, hogy fiókodat nem módosíthatod! Amennyiben szerinted ez egy hiba, lépj kapcsolatba az adminisztrátorral!",
-                    icon: "error",
-                });
-            } else {
-                Swal.fire({
-                    title: "HIBA!",
-                    text: data.message,
-                    icon: "error",
-                });
+            } finally {
+                hideLoading();
             }
         }
     </script>
+
+    <div id="loader_overlay" class="hide">
+        <div id="loading"></div>
+    </div>
 
     <!-- Made by Novy -->
     <div class="footer">

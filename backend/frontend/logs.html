@@ -51,8 +51,21 @@
 </head>
 
 <body onload="(async () => {
-    await checkAuth();
-    await getLogs();
+    showLoading();
+    try {
+        await checkAuth();
+        await getLogs();
+    } catch (err) {
+        console.error(err);
+        Sentry.captureException(err);
+        Swal.fire({
+            title: 'HIBA!',
+            text: err.toString(),
+            icon: 'error',
+        });
+    } finally {
+        hideLoading();
+    }
     })()">
 
     <!-- particles.js container -->
@@ -67,7 +80,7 @@
                 <div id="logsContainer"
                     style="padding:13px; display: flex; flex-wrap: wrap; width: 80%; justify-content: space-evenly"
                     class="devicesContainer">
-                    
+
                 </div>
             </div>
         </div>
@@ -77,6 +90,7 @@
 
 
     <!-- scripts -->
+    <script src="./js/loading-spinner.js"></script>
     <script src="./particles.js"></script>
     <script src="./js/particle-loader.js"></script>
     <script src="./js/check-auth.js"></script>
@@ -112,4 +126,8 @@
             }
         }
     </script>
+
+    <div id="loader_overlay" class="hide">
+        <div id="loading"></div>
+    </div>
 </body>

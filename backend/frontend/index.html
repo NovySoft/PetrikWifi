@@ -23,16 +23,24 @@
   <link rel="manifest" href="/site.webmanifest">
   <script src="https://js-de.sentry-cdn.com/f0a8e95bd836b63881e5a3feb9d7f256.min.js" crossorigin="anonymous"></script>
   <script>
-    Sentry.onLoad(function() {
+    Sentry.onLoad(function () {
       Sentry.init({
-          // You can add any additional configuration here
-        });
+        // You can add any additional configuration here
+      });
     });
   </script>
 </head>
 
 <body onload="(async () => {
-  await checkAuth(true, true);
+  showLoading();
+  try {
+    await checkAuth(true, true);
+  } catch(err) {
+    console.error(err);
+    Sentry.captureException(err);
+  } finally {
+    hideLoading();
+  }
   })()">
 
   <!-- particles.js container -->
@@ -50,6 +58,7 @@
 
 
   <!-- scripts -->
+  <script src="./js/loading-spinner.js"></script>
   <script src="./particles.js"></script>
   <script src="./js/particle-loader.js"></script>
   <script src="./js/check-auth.js"></script>
@@ -60,6 +69,10 @@
   <div class="footer">
     <p>💖 <a href="https://github.com/NovySoft/PetrikWifi" target="_blank"
         style="color: white; text-decoration: underline;">OpenSource</a> 💖</p>
+  </div>
+
+  <div id="loader_overlay" class="hide">
+    <div id="loading"></div>
   </div>
 </body>
 
