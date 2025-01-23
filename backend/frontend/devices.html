@@ -51,9 +51,24 @@
 </head>
 
 <body onload="(async () => {
-    await checkAuth();
-    checkAdmin();
-    await getAllDevices();
+    showLoading();
+    try {
+        await checkAuth();
+        checkAdmin();
+        await getAllDevices();
+    } catch (err) {
+        console.error(err);
+        Sentry.captureException(err);
+        Swal.fire({
+            icon: 'error',
+            title: 'Hiba történt!',
+            text: err.toString(),
+        }).then(() => {
+            window.location.href = '/';
+        });
+    } finally {
+        hideLoading();
+    }
     })()">
 
     <!-- particles.js container -->
@@ -84,6 +99,7 @@
 
 
     <!-- scripts -->
+    <script src="./js/loading-spinner.js"></script>
     <script src="./particles.js"></script>
     <script src="./js/particle-loader.js"></script>
     <script src="./js/check-auth.js"></script>
@@ -244,33 +260,47 @@
                     }
                 }
 
-                const result = await fetch('/updateDevice', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        userID: event.dataset.userid,
-                        device: event.dataset.mac,
-                        mac: event.dataset.mac,
-                        comment: comment,
-                        banned: banned == true ? 1 : 0,
-                    }),
-                });
-
-                if (result.status == 200) {
-                    await Swal.fire({
-                        icon: 'success',
-                        title: 'Siker!',
+                showLoading();
+                try {
+                    const result = await fetch('/updateDevice', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            userID: event.dataset.userid,
+                            device: event.dataset.mac,
+                            mac: event.dataset.mac,
+                            comment: comment,
+                            banned: banned == true ? 1 : 0,
+                        }),
                     });
-                    location.reload();
-                } else {
-                    console.error(data);
+
+                    if (result.status == 200) {
+                        hideLoading();
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Siker!',
+                        });
+                        location.reload();
+                    } else {
+                        console.error(data);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Hiba történt!',
+                            text: 'Kérlek próbáld újra!\n' + data.error + '\n' + data.message,
+                        });
+                    }
+                } catch (err) {
+                    console.error(err);
+                    Sentry.captureException(err);
                     Swal.fire({
                         icon: 'error',
                         title: 'Hiba történt!',
-                        text: 'Kérlek próbáld újra!\n' + data.error + '\n' + data.message,
+                        text: err.toString(),
                     });
+                } finally {
+                    hideLoading();
                 }
             }
         }
@@ -319,6 +349,10 @@
         }
     </script>
     <!-- Made by Novy -->
+
+    <div id="loader_overlay" class="hide">
+        <div id="loading"></div>
+    </div>
 </body>
 
 </html>

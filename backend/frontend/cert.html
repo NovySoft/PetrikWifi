@@ -32,7 +32,15 @@
 </head>
 
 <body onload="(async () => {
-    await checkAuth();
+    showLoading();
+    try {
+        await checkAuth();
+    } catch(err) {
+        console.error(err);
+        Sentry.captureException(err);
+    } finally {
+        hideLoading();
+    }
     })()">
 
     <!-- particles.js container -->
@@ -87,6 +95,7 @@
 
 
     <!-- scripts -->
+    <script src="./js/loading-spinner.js"></script>
     <script src="./particles.js"></script>
     <script src="./js/particle-loader.js"></script>
     <script src="./js/check-auth.js"></script>
@@ -95,6 +104,10 @@
 
     <div class="footer">
         <p>💖 <a href="https://github.com/NovySoft/PetrikWifi" target="_blank" style="color: white; text-decoration: underline;">OpenSource</a> 💖</p>
+    </div>
+
+    <div id="loader_overlay" class="hide">
+        <div id="loading"></div>
     </div>
 </body>
 

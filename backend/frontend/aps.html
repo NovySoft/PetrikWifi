@@ -35,18 +35,26 @@
     <link rel="manifest" href="/site.webmanifest">
     <script src="https://js-de.sentry-cdn.com/f0a8e95bd836b63881e5a3feb9d7f256.min.js" crossorigin="anonymous"></script>
     <script>
-        Sentry.onLoad(function() {
-          Sentry.init({
-              // You can add any additional configuration here
+        Sentry.onLoad(function () {
+            Sentry.init({
+                // You can add any additional configuration here
             });
         });
-      </script>
+    </script>
 </head>
 
 <body onload="(async () => {
-    await checkAuth();
-    checkAdmin();
-    await getAllAps();
+    showLoading();
+    try {
+        await checkAuth();
+        checkAdmin();
+        await getAllAps();
+    } catch(err) {
+        console.error(err);
+        Sentry.captureException(err);
+    } finally {
+        hideLoading();
+    }
     })()">
 
     <!-- particles.js container -->
@@ -70,6 +78,7 @@
 
 
     <!-- scripts -->
+    <script src="./js/loading-spinner.js"></script>
     <script src="./particles.js"></script>
     <script src="./js/particle-loader.js"></script>
     <script src="./js/check-auth.js"></script>
@@ -161,31 +170,45 @@
                     return;
                 }
 
-                const res = await fetch('/createAp', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        ap,
-                        ip,
-                        comment,
-                    }),
-                });
-
-                const data = await res.json();
-                if (data.code === "OK") {
-                    await Swal.fire({
-                        title: 'Sikeres AP hozzáadás',
-                        icon: 'success',
+                showLoading();
+                try {
+                    const res = await fetch('/createAp', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            ap,
+                            ip,
+                            comment,
+                        }),
                     });
-                    location.reload();
-                } else {
+
+                    const data = await res.json();
+                    if (data.code === "OK") {
+                        hideLoading();
+                        await Swal.fire({
+                            title: 'Sikeres AP hozzáadás',
+                            icon: 'success',
+                        });
+                        location.reload();
+                    } else {
+                        Swal.fire({
+                            title: 'Hiba történt',
+                            text: data.error,
+                            icon: 'error',
+                        });
+                    }
+                } catch (err) {
+                    console.error(err);
+                    Sentry.captureException(err);
                     Swal.fire({
                         title: 'Hiba történt',
-                        text: data.error,
+                        text: err.toString(),
                         icon: 'error',
                     });
+                } finally {
+                    hideLoading();
                 }
             }
         }
@@ -233,31 +256,45 @@
                     return;
                 }
 
-                const res = await fetch('/updateAp', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        ap,
-                        ip: newIp,
-                        comment: newComment,
-                    }),
-                });
-
-                const data = await res.json();
-                if (data.code === "OK") {
-                    await Swal.fire({
-                        title: 'Sikeres AP szerkesztés',
-                        icon: 'success',
+                showLoading();
+                try {
+                    const res = await fetch('/updateAp', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            ap,
+                            ip: newIp,
+                            comment: newComment,
+                        }),
                     });
-                    location.reload();
-                } else {
+
+                    const data = await res.json();
+                    if (data.code === "OK") {
+                        hideLoading();
+                        await Swal.fire({
+                            title: 'Sikeres AP szerkesztés',
+                            icon: 'success',
+                        });
+                        location.reload();
+                    } else {
+                        Swal.fire({
+                            title: 'Hiba történt',
+                            text: data.error,
+                            icon: 'error',
+                        });
+                    }
+                } catch (err) {
+                    console.error(err);
+                    Sentry.captureException(err);
                     Swal.fire({
                         title: 'Hiba történt',
-                        text: data.error,
+                        text: err.toString(),
                         icon: 'error',
                     });
+                } finally {
+                    hideLoading();
                 }
             }
             if (result.isDenied) {
@@ -272,34 +309,53 @@
                     cancelButtonText: 'Mégse',
                 });
                 if (confirm.isConfirmed) {
-                    const res = await fetch('/deleteAp', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            ap,
-                        }),
-                    });
-
-                    const data = await res.json();
-                    if (data.code === "OK") {
-                        await Swal.fire({
-                            title: 'Sikeres AP törlés',
-                            icon: 'success',
+                    showLoading();
+                    try {
+                        const res = await fetch('/deleteAp', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                ap,
+                            }),
                         });
-                        location.reload();
-                    } else {
+
+                        const data = await res.json();
+                        if (data.code === "OK") {
+                            hideLoading();
+                            await Swal.fire({
+                                title: 'Sikeres AP törlés',
+                                icon: 'success',
+                            });
+                            location.reload();
+                        } else {
+                            Swal.fire({
+                                title: 'Hiba történt',
+                                text: data.error,
+                                icon: 'error',
+                            });
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        Sentry.captureException(err);
                         Swal.fire({
                             title: 'Hiba történt',
-                            text: data.error,
+                            text: err.toString(),
                             icon: 'error',
                         });
+                    } finally {
+                        hideLoading();
                     }
                 }
             }
         }
+
     </script>
+
+    <div id="loader_overlay" class="hide">
+        <div id="loading"></div>
+    </div>
 </body>
 
 </html>
