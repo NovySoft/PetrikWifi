@@ -39,7 +39,7 @@
 <body onload="(async () => {
     showLoading();
     try {
-        //await checkAuth();
+        await checkAuth();
     } catch(err) {
         console.error(err);
         Sentry.captureException(err);
