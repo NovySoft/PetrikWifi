@@ -119,7 +119,7 @@ export default async function handler(request, reply) {
             .send({
                 'control:Cleartext-Password': decrypted_password.toString('utf8'),
                 'Cleartext-Password': decrypted_password.toString('utf8'),
-                'Session-Timeout': 8 * 60 * 60, // 8 hours
+                'Session-Timeout': 1 * 60 * 60, // 1 hours
             });
 
         logger.info(`RADIUS SUCCESS: ${request.body.username} (${request.body.source}) auth info sent to ${request.body.destination}`);
