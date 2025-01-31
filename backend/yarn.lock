@@ -493,15 +493,15 @@
     "@opentelemetry/instrumentation" "^0.49 || ^0.50 || ^0.51 || ^0.52.0 || ^0.53.0"
     "@opentelemetry/sdk-trace-base" "^1.22"
 
-"@sentry/core@8.52.0":
-  version "8.52.0"
-  resolved "https://registry.yarnpkg.com/@sentry/core/-/core-8.52.0.tgz#ad5f4099b82a35b53c16be1fa86fd51817acd051"
-  integrity sha512-2j3B7IKmseTKFm6AyheJ+RSgXqIsx+3blFSuxpkdvsEt60Lbzva2uDkCENfBDOclioo1kvHgsyuXLfWW4A+wwA==
+"@sentry/core@8.53.0":
+  version "8.53.0"
+  resolved "https://registry.yarnpkg.com/@sentry/core/-/core-8.53.0.tgz#a7d12712c9003422d7ab8550f8a301b93d9f733b"
+  integrity sha512-u6p5JeGSgvcoDqVcPve2gcJuhks8EQXPELzeYKuW3rHpsUfkLG6X5RVtk32dKOqqL2qzvMelnknBN7tyIf5PiA==
 
-"@sentry/node@8.52.0", "@sentry/node@^8.52.0":
-  version "8.52.0"
-  resolved "https://registry.yarnpkg.com/@sentry/node/-/node-8.52.0.tgz#32720d22f4a6496ba3366d06831c2663aedc38f7"
-  integrity sha512-k+GuWbLDcqIS766zF+TvVRnfbshNy6XKRd+HRNIEaeYa9Tm4LH/ZgCxz39AhFAQGWlZUHm/G2KkCt3AvgswJEg==
+"@sentry/node@8.53.0", "@sentry/node@^8.52.0":
+  version "8.53.0"
+  resolved "https://registry.yarnpkg.com/@sentry/node/-/node-8.53.0.tgz#454befcc901155460bce1087ef3ef334d0fff993"
+  integrity sha512-1Zl/56xz6xy+ybo+VodcomT8/GenD2A57DmZ6m2otIFtcmGLEFr48M21h5bcRuj7o730MV2pfYVHRgiMQEjLMw==
   dependencies:
     "@opentelemetry/api" "^1.9.0"
     "@opentelemetry/context-async-hooks" "^1.29.0"
@@ -535,24 +535,24 @@
     "@opentelemetry/sdk-trace-base" "^1.29.0"
     "@opentelemetry/semantic-conventions" "^1.28.0"
     "@prisma/instrumentation" "5.22.0"
-    "@sentry/core" "8.52.0"
-    "@sentry/opentelemetry" "8.52.0"
+    "@sentry/core" "8.53.0"
+    "@sentry/opentelemetry" "8.53.0"
     import-in-the-middle "^1.11.2"
 
-"@sentry/opentelemetry@8.52.0":
-  version "8.52.0"
-  resolved "https://registry.yarnpkg.com/@sentry/opentelemetry/-/opentelemetry-8.52.0.tgz#ef3276098dbaabdf57d3a06bc7674e5dc192d907"
-  integrity sha512-NbGPsCZmXQW/B2wlgIjeIn9bCsNKhZGenB0DLK8ZIS/eDOI0JRBjHWMpLS9H9Q0xqgFBjyp+Gwyu3nEZcN4lXw==
+"@sentry/opentelemetry@8.53.0":
+  version "8.53.0"
+  resolved "https://registry.yarnpkg.com/@sentry/opentelemetry/-/opentelemetry-8.53.0.tgz#f89f51c30b6418adc9e3097cb0bb517cc9ac8d15"
+  integrity sha512-IDpfbQCFDUqXdspTOUujcfvvslmtMJ4cUoXP+NHgkjbeNvcwoPvAT4PNUmzisPYQT4DXb8ERxJOzy2VpG6w8hQ==
   dependencies:
-    "@sentry/core" "8.52.0"
+    "@sentry/core" "8.53.0"
 
 "@sentry/profiling-node@^8.52.0":
-  version "8.52.0"
-  resolved "https://registry.yarnpkg.com/@sentry/profiling-node/-/profiling-node-8.52.0.tgz#efb176305c7028d52e2a9fc65e18290d02b2aae5"
-  integrity sha512-Omr2VFptPGM/+rMLcuzksTkMrCIXCUL2dHWoqbmA2+IRqX4QxDCzfxGCN7sw6yeQni3GpVyPkSMFc9oa3TiFDA==
+  version "8.53.0"
+  resolved "https://registry.yarnpkg.com/@sentry/profiling-node/-/profiling-node-8.53.0.tgz#ae1d53a1d3bc1b2c9cd71e424bd88f8158ef50d3"
+  integrity sha512-7FYsluUz5KDAzADkpJtDNVgmfss4ENmHgttdQezmSQoo+jh5jyVYfiTjJQK7NS0mkZ5C61oQ1OS4oO49pwSSvQ==
   dependencies:
-    "@sentry/core" "8.52.0"
-    "@sentry/node" "8.52.0"
+    "@sentry/core" "8.53.0"
+    "@sentry/node" "8.53.0"
     detect-libc "^2.0.2"
     node-abi "^3.61.0"
 
@@ -758,9 +758,9 @@ chownr@^1.1.1:
   integrity sha512-jJ0bqzaylmJtVnNgzTeSOs8DPavpbYgEr/b0YL8/2GO3xJEhInFmhKMUnEJQjZumK7KXGFhUy89PrsJWlakBVg==
 
 cjs-module-lexer@^1.2.2:
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/cjs-module-lexer/-/cjs-module-lexer-1.4.1.tgz#707413784dbb3a72aa11c2f2b042a0bef4004170"
-  integrity sha512-cuSVIHi9/9E/+821Qjdvngor+xpnlwnuwIyZOaLmHBVdXL+gP+I6QQB9VkO7RI77YIcTV+S1W9AreJ5eN63JBA==
+  version "1.4.3"
+  resolved "https://registry.yarnpkg.com/cjs-module-lexer/-/cjs-module-lexer-1.4.3.tgz#0f79731eb8cfe1ec72acd4066efac9d61991b00d"
+  integrity sha512-9z8TZaGM1pfswYeXrUpzPrkx8UnWYdhJclsiYMm6x/w5+nN+8Tf/LnAgfLGQCm59qAOxU8WwHEq2vNwF6i4j+Q==
 
 color-convert@^2.0.1:
   version "2.0.1"
@@ -939,9 +939,9 @@ fastify@^5.2.1:
     toad-cache "^3.7.0"
 
 fastq@^1.17.1:
-  version "1.18.0"
-  resolved "https://registry.yarnpkg.com/fastq/-/fastq-1.18.0.tgz#d631d7e25faffea81887fe5ea8c9010e1b36fee0"
-  integrity sha512-QKHXPW0hD8g4UET03SdOdunzSouc9N4AuHdsX8XNcTsuz+yYFILVNIX4l9yHABMhiEI9Db0JTTIpu0wB+Y1QQw==
+  version "1.19.0"
+  resolved "https://registry.yarnpkg.com/fastq/-/fastq-1.19.0.tgz#a82c6b7c2bb4e44766d865f07997785fecfdcb89"
+  integrity sha512-7SFSRCNjBQIZH/xZR3iy5iQYR8aGBE0h3VG6/cwlbrpdciNYBMotQav8c1XI3HjHH+NikUpP53nPdlZSdWmFzA==
   dependencies:
     reusify "^1.0.4"
 
