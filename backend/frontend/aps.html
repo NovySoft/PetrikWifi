@@ -35,11 +35,15 @@
     <link rel="manifest" href="/site.webmanifest">
     <script src="https://js-de.sentry-cdn.com/f0a8e95bd836b63881e5a3feb9d7f256.min.js" crossorigin="anonymous"></script>
     <script>
-        Sentry.onLoad(function () {
-            Sentry.init({
-                // You can add any additional configuration here
-            });
-        });
+        window.sentryOnLoad = function () {
+            Sentry.init({});
+
+            Sentry.lazyLoadIntegration("captureConsoleIntegration").then(
+                (integration) => {
+                    Sentry.addIntegration(integration());
+                },
+            );
+        };
     </script>
 </head>
 
