@@ -206,6 +206,9 @@ fastify.post('/updateDevice', updateDevice);
 import getSelfDevices from './router/devices/getSelfDevices.js';
 fastify.post('/getSelfDevices', getSelfDevices);
 
+import deleteDevice from './router/devices/deleteDevice.js';
+fastify.post('/deleteDevice', deleteDevice);
+
 import fastifyStatic from '@fastify/static';
 import { fileURLToPath } from 'url';
 import path from 'path';
