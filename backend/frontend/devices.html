@@ -1,3 +1,4 @@
+<!-- TODO: Allow device removal -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -42,15 +43,11 @@
     <link rel="manifest" href="/site.webmanifest">
     <script src="https://js-de.sentry-cdn.com/f0a8e95bd836b63881e5a3feb9d7f256.min.js" crossorigin="anonymous"></script>
     <script>
-        window.sentryOnLoad = function () {
-            Sentry.init({});
-
-            Sentry.lazyLoadIntegration("captureConsoleIntegration").then(
-                (integration) => {
-                    Sentry.addIntegration(integration());
-                },
-            );
-        };
+        Sentry.onLoad(function () {
+            Sentry.init({
+                attachStacktrace: true,
+            });
+        });
     </script>
 </head>
 
@@ -109,6 +106,7 @@
     <script src="./js/check-auth.js"></script>
     <script src="./js/escape-html.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="./js/report-console.js"></script>
     <script>
         let allDevices = [];
         let filteredDevices = [];
