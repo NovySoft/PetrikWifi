@@ -157,8 +157,8 @@
         `;
 
 
-        const devicesTemplate = (mac, comment, lastActive, isUserBanned, deviceBanned, counter, userID) => `
-                <div class="device" onclick="devicePressed(this)" style="cursor: pointer" data-mac="${mac}" data-comment="${comment ?? ''}" data-banned="${deviceBanned}" data-userid="${userID}">
+        const devicesTemplate = (mac, comment, lastActive, isUserBanned, deviceBanned, counter, userID, username) => `
+                <div class="device" onclick="devicePressed(this)" style="cursor: pointer" data-mac="${mac}" data-comment="${comment ?? ''}" data-banned="${deviceBanned}" data-userid="${userID}" data-username="${username}">
                     ${(isUserBanned || deviceBanned || blockedDevices.includes(mac)) ? userBanned : (counter > 1 ? deviceWarning : userNormal)}
                     ${isUserBanned ? '<p>Felhasználó letiltva</p>' : ''}
                     ${counter > 1 ? '<p>Az eszköz ' + counter + ' felhasználónál szerepel</p>' : ''}
@@ -220,7 +220,7 @@
                 }
 
                 const lastActive = new Date(item.deviceLastActive).toLocaleString();
-                devicesHtml += devicesTemplate(item.mac, item.deviceComment, lastActive, item.userBanned, item.deviceBanned, macCounter[item.mac], item.userID);
+                devicesHtml += devicesTemplate(item.mac, item.deviceComment, lastActive, item.userBanned, item.deviceBanned, macCounter[item.mac], item.userID, item.username);
             }
 
             devicesHtml += '</div>';
@@ -244,6 +244,8 @@
                 `,
                 showCancelButton: true,
                 cancelButtonText: 'Mégse',
+                showDenyButton: true,
+                denyButtonText: 'Törlés',
             });
             const banned = document.getElementById('banned').checked;
             const comment = document.getElementById('comment').value;
@@ -303,6 +305,62 @@
                     });
                 } finally {
                     hideLoading();
+                }
+            }
+            if (res.isDenied) {
+                // Delay a few milliseconds to prevent double click
+                const mac = event.dataset.mac.replaceAll('-', ':').toLowerCase();
+                const username = event.dataset.username;
+                await new Promise(r => setTimeout(r, 100));
+                const confirm = await Swal.fire({
+                    title: 'Biztosan törölni szeretnéd ezt az eszközt?',
+                    html: `<p>Ez a művelet nem visszavonható!<br><br>Figyelem! Az eszköz törlése <strong>nem</strong> tiltja meg annak az újracsatlakozását!<br><br>${username}<br>${mac}</p>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Igen',
+                    cancelButtonText: 'Mégse',
+                });
+
+                if (confirm.isConfirmed) {
+                    showLoading();
+                    try {
+                        const result = await fetch('/deleteDevice', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                userID: event.dataset.userid,
+                                device: event.dataset.mac,
+                            }),
+                        });
+                        const data = await result.json();
+                        if (result.status == 200) {
+                            hideLoading();
+                            await Swal.fire({
+                                icon: 'success',
+                                title: 'Sikeresen törölted az eszközt!',
+                            });
+                            location.reload();
+                        } else {
+                            console.error(data);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Hiba történt!',
+                                text: 'Kérlek próbáld újra!\n' + data.error + '\n' + data.message,
+                            });
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        Sentry.captureException(err);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Hiba történt!',
+                            text: err.toString(),
+                        });
+                    } finally {
+                        hideLoading();
+                    }
                 }
             }
         }
