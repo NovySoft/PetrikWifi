@@ -3,8 +3,6 @@ import { db } from './database.js';
 import { SUPER_SECRET_KEY, getKeyFromPassword, decrypt } from "./encryptor.js";
 export const FREERADIUS_IP = "172.18.1.2";
 
-//TODO: Log all IPs, devices, and add comments from db to logging
-
 export default async function handler(request, reply) {
     // request.body {username: 'novylevi', password: '', source: 'EA-B7-EE-4E-58-57', destination: '78-8A-20-8D-71-79:Petrik-Radius-Test', 'IP': '127.0.0.1', 'NAS': '78-8A-20-8D-71-79'}
     logger.silly(request.body);
@@ -68,7 +66,7 @@ export default async function handler(request, reply) {
                 code: 'NOT_FOUND',
                 message: 'The requested user was not found.',
             });
-            logger.info(`RADIUS: User Not Found: ${request.body.username}`);
+            logger.info(`RADIUS: User Not Found: ${request.body.username}`, request.body);
             return;
         }
 
@@ -80,7 +78,7 @@ export default async function handler(request, reply) {
                 code: 'FORBIDDEN',
                 message: 'You are not allowed to access this resource.',
             });
-            logger.warn(`RADIUS: User Banned: ${request.body.username} tried to authenticate.`);
+            logger.warn(`RADIUS: User Banned: ${request.body.username} tried to authenticate.`, request.body);
             return;
         }
 
@@ -91,11 +89,11 @@ export default async function handler(request, reply) {
         } else {
             // Devices is in the database
             db.prepare('UPDATE Devices SET lastActive = ? WHERE device = ?').run(Date.now(), request.body.source);
-            
+
             // This device is not associated with this user (but it is in the database)
             if (!deviceInfo.some(device => device.userID == user.userID)) {
                 db.prepare('INSERT INTO Devices (userID, device, lastActive) VALUES (?, ?, ?)').run(user.userID, request.body.source, Date.now());
-            }    
+            }
         }
 
         // Check if the device is banned
@@ -105,7 +103,7 @@ export default async function handler(request, reply) {
                 code: 'FORBIDDEN',
                 message: 'You are not allowed to access this resource.',
             });
-            logger.warn(`RADIUS: Device Banned: ${request.body.source} tried to authenticate.`);
+            logger.warn(`RADIUS: Device Banned: ${request.body.source} tried to authenticate.`, request.body);
             return;
         }
 
@@ -124,7 +122,11 @@ export default async function handler(request, reply) {
                 'Session-Timeout': 1 * 60 * 60, // 1 hours
             });
 
-        logger.info(`RADIUS SUCCESS: ${request.body.username} (${request.body.source}) auth info sent to ${request.body.destination}`);
+        if (request.body.username === 'radtest') {
+            logger.debug(`RADIUS: Healthtest User: ${request.body.username} (${request.body.source}) auth info sent to ${request.body.destination}`);
+        } else {
+            logger.info(`RADIUS SUCCESS: ${request.body.username} (${request.body.source}) auth info sent to ${request.body.destination}`);
+        }
 
         //Clear all buffers - best practice
         salt.fill(0);

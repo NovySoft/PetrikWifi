@@ -21,8 +21,17 @@ fastify.addHook('onRequest', (request, reply, done) => {
 
 fastify.addHook('onSend', (request, reply, payload, done) => {
     const user = request?.session?.get('user')?.userPrincipalName;
+
     if (request.url.toLowerCase().startsWith('/login/microsoft/callback')) {
+        // Do not log the callback request, as it contains sensitive information
         logger.info(`REQUEST: ${request.realip} ${user != null ? '(' + user + ')' : ''} ${request.headers['user-agent'] ?? 'Unknown'}: ${request.method} /login/microsoft/callback/*** - ${reply.statusCode}`);
+        done();
+        return;
+    }
+    if (request.method === 'POST' && request.url == "/radius/authorize" && request.realip == FREERADIUS_IP && reply.statusCode == 200) {
+        // Do not log the RADIUS authorize (only debug) request if it comes from the FreeRADIUS server and is a 200 OK response
+        // Logging should be done in the radius.js file
+        logger.debug(`REQUEST: ${request.realip} ${user != null ? '(' + user + ')' : ''} ${request.headers['user-agent'] ?? 'Unknown'}: ${request.method} ${request.url} - ${reply.statusCode}`);
         done();
         return;
     }
@@ -240,6 +249,7 @@ const job = new Cron('0 2 * * *', async () => {
     await cleanDatabase();
     logger.info('Database cleaning finished. Took ' + (Date.now() - time) + 'ms.');
     //TODO Backup database
+    //TODO: Delete empty error log files
 });
 
 async function main() {
