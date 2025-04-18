@@ -14,7 +14,7 @@
     "@sentry/profiling-node": "^9.13.0",
     "better-sqlite3": "^11.8.1",
     "croner": "^9.0.0",
-    "fastify": "^5.3.1",
+    "fastify": "^5.3.2",
     "rotating-file-stream": "^3.2.5",
     "tslog": "^4.9.3"
   }
