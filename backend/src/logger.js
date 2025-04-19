@@ -4,14 +4,20 @@ import { createStream } from "rotating-file-stream";
 const pad = num => (num > 9 ? "" : "0") + num;
 const fileNameGenerator = (time, index) => {
     if (!time) return "./logs/MAIN.log";
+    const date = new Date(time);
+    // Subtract 1 day to get the correct date for the log file name (saving yesterday's logs to yesterday's file)
+    date.setDate(date.getDate() - 1); 
 
-    return `./logs/${time.getFullYear()}-${pad(time.getMonth() + 1)}-${pad(time.getDate())}.log`;
+    return `./logs/${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}.log`;
 };
 
 const errFileNameGenerator = (time, index) => {
     if (!time) return "./logs/ERROS-MAIN.log";
+    const date = new Date(time);
+    // Subtract 1 day to get the correct date for the log file name (saving yesterday's logs to yesterday's file)
+    date.setDate(date.getDate() - 1); 
 
-    return `./logs/ERRORS-${time.getFullYear()}-${pad(time.getMonth() + 1)}-${pad(time.getDate())}.log`;
+    return `./logs/ERRORS-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}.log`;
 };
 
 const stream = createStream(fileNameGenerator, {
