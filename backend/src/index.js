@@ -245,11 +245,25 @@ import { cleanDatabase } from './databaseCleaner.js';
 // Every day at 2:00: '0 2 * * *'
 const job = new Cron('0 2 * * *', async () => {
     logger.info('Database cleaning started.');
-    const time = Date.now();
+    let time = Date.now();
     await cleanDatabase();
     logger.info('Database cleaning finished. Took ' + (Date.now() - time) + 'ms.');
     //TODO Backup database
-    //TODO: Delete empty error log files
+    
+    logger.info('Log file cleaning started.');
+    time = Date.now();
+    // Delete empty log files
+    const logFiles = fs.readdirSync('./logs/').filter(file => file.endsWith('.log'));
+    for (const file of logFiles) {
+        if (file === 'MAIN.log' || file === 'ERROS-MAIN.log') continue; // Skip main log files
+        // Check if file is empty
+        const stats = fs.statSync(`./logs/${file}`);
+        if (stats.size === 0) {
+            fs.unlinkSync(`./logs/${file}`);
+            logger.info(`Deleted empty log file: ${file}`);
+        }
+    }
+    logger.info('Log file cleaning finished. Took ' + (Date.now() - time) + 'ms.');
 });
 
 async function main() {

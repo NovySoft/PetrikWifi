@@ -2,6 +2,8 @@ import { db } from '../../database.js';
 import { getSalt, SUPER_SECRET_KEY, getKeyFromPassword, encrypt } from '../../encryptor.js';
 import logger from '../../logger.js';
 
+//TODO: User-Mac binding/allowlist
+
 export default async function updateUser(req, res) {
     if (req.session.get('login') !== true) {
         res.status(403).send({
