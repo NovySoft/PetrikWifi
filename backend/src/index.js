@@ -35,6 +35,14 @@ fastify.addHook('onSend', (request, reply, payload, done) => {
         done();
         return;
     }
+
+    if (request.method === 'HEAD' && request.url == "/ping" && request.realip === '127.0.0.1') {
+        // Do not log the ping request if it comes from localhost
+        logger.debug(`REQUEST: ${request.realip} ${user != null ? '(' + user + ')' : ''} ${request.headers['user-agent'] ?? 'Unknown'}: ${request.method} ${request.url} - ${reply.statusCode}`);
+        done();
+        return;
+    }
+
     logger.info(`REQUEST: ${request.realip} ${user != null ? '(' + user + ')' : ''} ${request.headers['user-agent'] ?? 'Unknown'}: ${request.method} ${request.url} - ${reply.statusCode}`);
     done();
 });
@@ -249,7 +257,7 @@ const job = new Cron('0 2 * * *', async () => {
     await cleanDatabase();
     logger.info('Database cleaning finished. Took ' + (Date.now() - time) + 'ms.');
     //TODO Backup database
-    
+
     logger.info('Log file cleaning started.');
     time = Date.now();
     // Delete empty log files
