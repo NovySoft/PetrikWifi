@@ -129,6 +129,12 @@ fastify.get('/login/microsoft/callback', async function (request, reply) {
 
 import secureSession from "@fastify/secure-session";
 import fs from 'fs';
+if (!fs.existsSync('./secret-key')) {
+    logger.error('Secret key not found. Please generate a secret key using the following command:\n' +
+        'openssl rand -base64 32 > secret-key\n' +
+        'Then restart the server.');
+    process.exit(1);
+}
 fastify.register(secureSession, {
     sessionName: 'session',
     cookieName: 'SessionID',
