@@ -131,7 +131,9 @@ import secureSession from "@fastify/secure-session";
 import fs from 'fs';
 if (!fs.existsSync('./secret-key')) {
     logger.error('Secret key not found. Please generate a secret key using the following command:\n' +
-        'openssl rand -base64 32 > secret-key\n' +
+        'npx --yes @fastify/secure-session > secret-key\n' +
+        'or\n' +
+        './node_modules/@fastify/secure-session/genkey.js > secret-key\n' +
         'Then restart the server.');
     process.exit(1);
 }
