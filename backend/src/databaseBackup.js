@@ -128,7 +128,7 @@ export default function backupDatabase() {
                                         async (uploadLogsSpan) => {
                                             const time = Date.now();
                                             logger.info('Uploading log file to NextCloud...');
-                                            const date = new Date(time);
+                                            let date = new Date(time);
                                             // Subtract 1 day to get the correct date for the log file name (saving yesterday's logs to yesterday's file)
                                             date.setDate(date.getDate() - 1);
                                             const logFilePath = `./logs/${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}.log`;
@@ -142,6 +142,19 @@ export default function backupDatabase() {
                                             } else {
                                                 logger.warn(`Yesterday's log file not found. (${logFilePath}) Skipping upload.`);
                                             }
+
+                                            date = new Date(time);
+                                            const errorLogFilePath = `./logs/ERRORS-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}.log`;
+                                            if (fs.existsSync(errorLogFilePath)) {
+                                                let createNewFileName = '/Logs/' + errorLogFilePath.split('/').pop();
+                                                if (process.env.NODE_ENV !== 'production') {
+                                                    createNewFileName += '.test';
+                                                }
+                                                await client.putFileContents(createNewFileName, fs.createReadStream(errorLogFilePath), { overwrite: true });
+                                                logger.info('Yesterday\'s error log file uploaded to NextCloud. Took ' + (Date.now() - time) + 'ms.');
+                                            } else {
+                                                logger.warn(`Yesterday's error log file not found. (${errorLogFilePath}) Skipping upload.`);
+                                            }
                                         }
                                     );
 
@@ -151,11 +164,11 @@ export default function backupDatabase() {
                                             op: "cron.backup_delete_remote_logs",
                                         },
                                         async () => {
-                                            // Delete remote logs older than 30 days
+                                            // Delete remote logs older than 365 days
                                             const time = Date.now();
                                             logger.info('Deleting remote logs older than 365 days...');
-                                            const thirtyDaysAgo = new Date(backupDate.getTime() - (365 * 24 * 60 * 60 * 1000));
-                                            const items = (await client.getDirectoryContents('/Logs/')).filter(item => item.type === 'file' && new Date(item.lastmod) < thirtyDaysAgo);
+                                            const aYearAgo = new Date(backupDate.getTime() - (365 * 24 * 60 * 60 * 1000));
+                                            const items = (await client.getDirectoryContents('/Logs/')).filter(item => item.type === 'file' && new Date(item.lastmod) < aYearAgo);
                                             for (const item of items) {
                                                 logger.info(`Deleting log ${item.filename}...`);
                                                 await client.deleteFile(item.filename);
