@@ -134,28 +134,18 @@ fastify.get('/login/microsoft/callback', async function (request, reply) {
 
 import secureSession from "@fastify/secure-session";
 import fs from 'fs';
-import sodium from 'sodium-native';
-
-const secretKeys = [];
-if (fs.existsSync('./secret-key')) {
-    secretKeys.push(fs.readFileSync('./secret-key'));
-} else {
-    logger.warn('Secret key not found. Generating a new one...');
-    const key1 = Buffer.alloc(sodium.crypto_secretbox_KEYBYTES)
-    sodium.randombytes_buf(key1)
-    fs.writeFileSync('./secret-key', key1);
-    secretKeys.push(key1);
-    logger.info('Secret key generated and saved to ./secret-key');
+if (!fs.existsSync('./secret-key')) {
+    logger.error('Secret key not found. Please generate a secret key using the following command:\n' +
+        'npx --yes @fastify/secure-session > secret-key\n' +
+        'or\n' +
+        './node_modules/@fastify/secure-session/genkey.js > secret-key\n' +
+        'Then restart the server.');
+    process.exit(1);
 }
-
-if (fs.existsSync('./secret-key2')) {
-    secretKeys.push(fs.readFileSync('./secret-key2'));
-}
-
 fastify.register(secureSession, {
     sessionName: 'session',
     cookieName: 'SessionID',
-    key: secretKeys,
+    key: fs.readFileSync('./secret-key'),
     expiry: 24 * 60 * 60, // Default 1 day
     cookie: {
         path: '/',
