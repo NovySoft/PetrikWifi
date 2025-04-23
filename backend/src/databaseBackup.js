@@ -44,7 +44,9 @@ export default function backupDatabase() {
                                 if (!directoryItems.some(item => item.filename === '/Databases')) {
                                     logger.info('Creating /Databases directory on NextCloud...');
                                     await client.createDirectory('/Databases');
+                                    await client.createDirectory('/Databases/Archive');
                                 }
+
                                 if (!directoryItems.some(item => item.filename === '/Logs')) {
                                     logger.info('Creating /Logs directory on NextCloud...');
                                     await client.createDirectory('/Logs');
@@ -56,10 +58,27 @@ export default function backupDatabase() {
                                         op: "cron.dbbackup_upload_db",
                                     },
                                     async (uploadDbSpan) => {
-                                        const time = Date.now();
+                                        let time = Date.now();
                                         logger.info('Uploading database backup to NextCloud...');
                                         await client.putFileContents('/Databases/' + backupFileName.split('/').pop(), fs.createReadStream(backupFileName), { overwrite: true });
                                         logger.info('Today\'s database backup uploaded to NextCloud. Took ' + (Date.now() - time) + 'ms.');
+
+                                        if (backupDate.getDate() == 1) {
+                                            // If today is the first day of the month, create an archive of the last month
+                                            const lastMonth = new Date(backupDate.getFullYear(), backupDate.getMonth() - 1, 1);
+                                            if (!(await client.exists('/Databases/Archive/' + lastMonth.getFullYear()))) {
+                                                logger.info('Creating /Databases/Archive/' + lastMonth.getFullYear() + ' directory on NextCloud...');
+                                                await client.createDirectory('/Databases/Archive/' + lastMonth.getFullYear());
+                                            }
+
+                                            time = Date.now();
+                                            logger.info('Copying last month\'s database backup to archive...');
+                                            await client.copyFile(
+                                                '/Databases/' + backupFileName.split('/').pop(),
+                                                `/Databases/Archive/${lastMonth.getFullYear()}/${backupFileName.split('/').pop()}`
+                                            );
+                                            logger.info(`Copying last month's database backup to archive finished. Took ${(Date.now() - time)}ms. (/Databases/Archive/${lastMonth.getFullYear()}/${backupFileName.split('/').pop()})`);
+                                        }
                                     }
                                 );
 
