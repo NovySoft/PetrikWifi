@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import logger from './logger.js';
 import { db } from './database.js';
 import { SUPER_SECRET_KEY, getKeyFromPassword, decrypt } from "./encryptor.js";
