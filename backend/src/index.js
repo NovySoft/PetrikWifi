@@ -4,6 +4,11 @@ import Fastify from 'fastify';
 import logger from './logger.js';
 import { initDB, db } from './database.js';
 
+process.on('unhandledRejection', (reason, p) => {
+    logger.fatal("Unhandled Rejection at: Promise ", p, " reason: ", reason);
+    Sentry.captureException(reason, p);
+});
+
 const fastify = Fastify({
     logger: false,
 });
@@ -264,7 +269,20 @@ const job = new Cron('0 2 * * *', async () => {
     let time = Date.now();
     await cleanDatabase();
     logger.info('Database cleaning finished. Took ' + (Date.now() - time) + 'ms.');
-    //TODO Backup database
+
+    logger.info('Database backup started.');
+    const backupTime = Date.now();
+    const backupDate = new Date(backupTime);
+    const pad = num => (num > 9 ? "" : "0") + num;
+    const backupFileName = `./database/backup-${backupDate.getFullYear()}-${pad(backupDate.getMonth() + 1)}-${pad(backupDate.getDate())}.db`
+    db.backup(backupFileName)
+        .then(() => {
+            logger.info(`Database backup finished. (${backupFileName}) Took ${Date.now() - backupTime}ms.`);
+        })
+        .catch((err) => {
+            logger.error('Database backup failed: ' + err);
+            Sentry.captureException(err);
+        });
 
     logger.info('Log file cleaning started.');
     time = Date.now();
