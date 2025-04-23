@@ -7,6 +7,11 @@ export default async function handler(request, reply) {
     // request.body {username: 'novylevi', password: '', source: 'EA-B7-EE-4E-58-57', destination: '78-8A-20-8D-71-79:Petrik-Radius-Test', 'IP': '127.0.0.1', 'NAS': '78-8A-20-8D-71-79'}
     logger.silly(request.body);
 
+    const span = Sentry.getActiveSpan();
+    if (span) {
+        span.setAttribute('radtestuser', request.body.username === 'radtest');
+    }
+
     if (process.env.NODE_ENV === 'production') {
         // Healthtest User
         if (request.body.username === 'radtest') {
