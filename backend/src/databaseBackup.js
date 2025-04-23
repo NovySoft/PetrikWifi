@@ -123,7 +123,7 @@ export default function backupDatabase() {
                                     Sentry.startSpan(
                                         {
                                             name: "Database Backup - Upload to NextCloud - Logs",
-                                            op: "cron.dbbackup_upload_logs",
+                                            op: "cron.backup_upload_logs",
                                         },
                                         async (uploadLogsSpan) => {
                                             const time = Date.now();
@@ -143,6 +143,25 @@ export default function backupDatabase() {
                                                 logger.warn(`Yesterday's log file not found. (${logFilePath}) Skipping upload.`);
                                             }
                                         }
+                                    );
+
+                                    Sentry.startSpan(
+                                        {
+                                            name: "Delete Remote Logs",
+                                            op: "cron.backup_delete_remote_logs",
+                                        },
+                                        async () => {
+                                            // Delete remote logs older than 30 days
+                                            const time = Date.now();
+                                            logger.info('Deleting remote logs older than 365 days...');
+                                            const thirtyDaysAgo = new Date(backupDate.getTime() - (365 * 24 * 60 * 60 * 1000));
+                                            const items = (await client.getDirectoryContents('/Logs/')).filter(item => item.type === 'file' && new Date(item.lastmod) < thirtyDaysAgo);
+                                            for (const item of items) {
+                                                logger.info(`Deleting log ${item.filename}...`);
+                                                await client.deleteFile(item.filename);
+                                            }
+                                            logger.info('Deleting remote logs older than 365 days finished. Took ' + (Date.now() - time) + 'ms.');
+                                        },
                                     );
                                 } catch (err) {
                                     logger.error('Error while uploading database backup to NextCloud: ' + err);
