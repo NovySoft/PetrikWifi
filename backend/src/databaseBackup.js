@@ -153,7 +153,7 @@ export default function backupDatabase() {
                                                 await client.putFileContents(createNewFileName, fs.createReadStream(errorLogFilePath), { overwrite: true });
                                                 logger.info('Yesterday\'s error log file uploaded to NextCloud. Took ' + (Date.now() - time) + 'ms.');
                                             } else {
-                                                logger.warn(`Yesterday's error log file not found. (${errorLogFilePath}) Skipping upload.`);
+                                                logger.info(`Yesterday's error log was probably empty. (${errorLogFilePath}) Skipping upload.`);
                                             }
                                         }
                                     );
