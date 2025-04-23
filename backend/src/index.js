@@ -4,6 +4,11 @@ import Fastify from 'fastify';
 import logger from './logger.js';
 import { initDB, db } from './database.js';
 
+process.on('unhandledRejection', (reason, p) => {
+    logger.fatal("Unhandled Rejection at: Promise ", p, " reason: ", reason);
+    Sentry.captureException(reason, p);
+});
+
 const fastify = Fastify({
     logger: false,
 });
@@ -268,45 +273,8 @@ fastify.register(fastifyStatic, {
     }
 });
 
-import { Cron } from 'croner';
-import { cleanDatabase } from './databaseCleaner.js';
-// Every minute: '* * * * *'
-// Every day at 2:00: '0 2 * * *'
-const job = new Cron('0 2 * * *', async () => {
-    logger.info('Database cleaning started.');
-    let time = Date.now();
-    await cleanDatabase();
-    logger.info('Database cleaning finished. Took ' + (Date.now() - time) + 'ms.');
-    //TODO Backup database
-
-    logger.info('Log file cleaning started.');
-    time = Date.now();
-    // Delete empty log files
-    const logFiles = fs.readdirSync('./logs/').filter(file => file.endsWith('.log'));
-    for (const file of logFiles) {
-        if (file === 'MAIN.log' || file === 'ERROS-MAIN.log') continue; // Skip main log files
-        // Check if file is empty
-        const stats = fs.statSync(`./logs/${file}`);
-        if (stats.size === 0) {
-            fs.unlinkSync(`./logs/${file}`);
-            logger.info(`Deleted empty log file: ${file}`);
-        }
-    }
-    logger.info('Log file cleaning finished. Took ' + (Date.now() - time) + 'ms.');
-
-    logger.info('Key rotation started.');
-    time = Date.now();
-    // Rotate keys
-    const key1 = Buffer.alloc(sodium.crypto_secretbox_KEYBYTES)
-    sodium.randombytes_buf(key1)
-    fs.writeFileSync('./secret-key', key1);
-
-    const key2 = secretKeys[0];
-    fs.writeFileSync('./secret-key2', key2);
-    secretKeys[0] = key1;
-    secretKeys[1] = key2;
-    logger.info('Key rotation finished. Took ' + (Date.now() - time) + 'ms.');
-});
+import cronJob from './cron.js';
+logger.info('Cron job registered. Next 3 runs:', cronJob.nextRuns(3).map((date) => date.toLocaleString('hu-HU', { timeZone: "Europe/Budapest" })));
 
 async function main() {
     try {
