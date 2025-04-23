@@ -1,6 +1,5 @@
 import { Cron } from 'croner';
 import { cleanDatabase } from './databaseCleaner.js';
-import { createClient } from "webdav";
 import logger from './logger.js';
 import fs from 'fs';
 import * as Sentry from "@sentry/node";
@@ -11,7 +10,7 @@ if (process.env.NX_CLOUD_URL == null || process.env.NX_CLOUD_USER == null || pro
 }
 // Every minute: '* * * * *'
 // Every day at 2:00: '0 2 * * *'
-const job = new Cron('* * * * *', () => {
+const job = new Cron('0 2 * * *', () => {
     Sentry.startSpan(
         {
             name: "Daily Cron job",

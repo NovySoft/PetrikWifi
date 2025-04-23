@@ -159,7 +159,7 @@ export default function backupDatabase() {
                 (deleteLocalBackupsSpan) => {
                     const time = Date.now();
                     logger.info('Deleting local backups older than 30 days...');
-                    const thirtyDaysAgo = new Date(backupDate.getTime() - (30 * 24 * 60 * 60 * 1000));
+                    const thirtyDaysAgo = new Date(Date.now() - (30 * 24 * 60 * 60 * 1000));
                     const files = fs.readdirSync('./database/').filter(file => file.endsWith('.db'));
                     for (const file of files) {
                         const stats = fs.statSync(`./database/${file}`);
