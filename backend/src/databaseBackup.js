@@ -133,7 +133,7 @@ export default function backupDatabase() {
                                             date.setDate(date.getDate() - 1);
                                             const logFilePath = `./logs/${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}.log`;
                                             if (fs.existsSync(logFilePath)) {
-                                                const createNewFileName = '/Logs/' + logFilePath.split('/').pop();
+                                                let createNewFileName = '/Logs/' + logFilePath.split('/').pop();
                                                 if (process.env.NODE_ENV !== 'production') {
                                                     createNewFileName += '.test';
                                                 }
