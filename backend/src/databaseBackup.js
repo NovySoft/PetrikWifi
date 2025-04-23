@@ -19,7 +19,10 @@ export default function backupDatabase() {
                 const backupTime = Date.now();
                 const backupDate = new Date(backupTime);
                 const pad = num => (num > 9 ? "" : "0") + num;
-                const backupFileName = `./database/backup-${backupDate.getFullYear()}-${pad(backupDate.getMonth() + 1)}-${pad(backupDate.getDate())}.db`
+                let backupFileName = `./database/backup-${backupDate.getFullYear()}-${pad(backupDate.getMonth() + 1)}-${pad(backupDate.getDate())}.db`;
+                if (process.env.NODE_ENV !== 'production') {
+                    backupFileName += '.test';
+                }
                 db.backup(backupFileName)
                     .then(async () => {
                         dbbackupSpan.end();
@@ -130,7 +133,11 @@ export default function backupDatabase() {
                                             date.setDate(date.getDate() - 1);
                                             const logFilePath = `./logs/${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}.log`;
                                             if (fs.existsSync(logFilePath)) {
-                                                await client.putFileContents('/Logs/' + logFilePath.split('/').pop(), fs.createReadStream(logFilePath), { overwrite: true });
+                                                const createNewFileName = '/Logs/' + logFilePath.split('/').pop();
+                                                if (process.env.NODE_ENV !== 'production') {
+                                                    createNewFileName += '.test';
+                                                }
+                                                await client.putFileContents(createNewFileName, fs.createReadStream(logFilePath), { overwrite: true });
                                                 logger.info('Yesterday\'s log file uploaded to NextCloud. Took ' + (Date.now() - time) + 'ms.');
                                             } else {
                                                 logger.warn(`Yesterday's log file not found. (${logFilePath}) Skipping upload.`);
