@@ -114,6 +114,9 @@ services:
       - MS_TOKEN_PATH=/tenant/oauth2/v2.0/token
       - SENTRY_DSN=https://example.sentry.dsn/123456789
       - REDIRECT_BASE=http://localhost:3000
+      - NX_CLOUD_URL=https://cloud.example.com
+      - NX_CLOUD_USER=example_user
+      - NX_CLOUD_PASS=example_password
   
 networks:
   petrik-radius-bridge:
