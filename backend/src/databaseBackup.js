@@ -126,7 +126,7 @@ export default function backupDatabase() {
                                             op: "cron.backup_upload_logs",
                                         },
                                         async (uploadLogsSpan) => {
-                                            const time = Date.now();
+                                            let time = Date.now();
                                             logger.info('Uploading log file to NextCloud...');
                                             let date = new Date(time);
                                             // Subtract 1 day to get the correct date for the log file name (saving yesterday's logs to yesterday's file)
@@ -143,7 +143,7 @@ export default function backupDatabase() {
                                                 logger.warn(`Yesterday's log file not found. (${logFilePath}) Skipping upload.`);
                                             }
 
-                                            date = new Date(time);
+                                            time = Date.now();
                                             const errorLogFilePath = `./logs/ERRORS-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}.log`;
                                             if (fs.existsSync(errorLogFilePath)) {
                                                 let createNewFileName = '/Logs/' + errorLogFilePath.split('/').pop();
