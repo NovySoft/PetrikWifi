@@ -183,8 +183,17 @@
 
         function searchBarUpdated() {
             const search = document.getElementById('search').value;
-            filteredUsers = allUsers.filter((user) => user.username.toLowerCase().includes(search.toLowerCase()) || user.comment?.toLowerCase().includes(search.toLowerCase()));
-            filteredUsers = applyFilters(filteredUsers);
+            let usersToFilter = allUsers; 
+
+            if (search) { 
+                const searchTerm = search.toLowerCase();
+                usersToFilter = allUsers.filter((user) =>
+                    user.username.toLowerCase().includes(searchTerm) ||
+                    (user.comment && user.comment.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            filteredUsers = applyFilters(usersToFilter); 
             updateList(filteredUsers);
         }
 
@@ -210,7 +219,7 @@
 
         function updateList(data) {
             const container = document.getElementById('mainContainer');
-            container.innerHTML = '';
+            let newHtml = ""; 
             for (const item of data) {
                 let iconSet = `
                             ${item.allowChangePassword == 1 ? canChangePassword : canTChangePassword}
@@ -222,16 +231,16 @@
 
                 let daysUntilInactivityDelete;
                 if (item.expireAfterInactiveDays != null && item.expireAfterInactiveDays != -1 && item.expireAfterInactiveDays != "") {
-                    daysUntilInactivityDelete = (item.lastActive + item.expireAfterInactiveDays * 24 * 60 * 60 * 1000) - Date.now();
+                    daysUntilInactivityDelete = (Number(item.lastActive) + Number(item.expireAfterInactiveDays) * 24 * 60 * 60 * 1000) - Date.now();
                     daysUntilInactivityDelete = Math.floor(daysUntilInactivityDelete / (1000 * 60 * 60 * 24));
                 }
 
                 let daysUntilExpire;
-                if (item.expireAtDate != null && item.expireAtDate != "") {
-                    daysUntilExpire = item.expireAtDate - Date.now();
+                if (item.expireAtDate != null && item.expireAtDate != "" && item.expireAtDate != "null") {
+                    daysUntilExpire = Number(item.expireAtDate) - Date.now();
                     daysUntilExpire = Math.floor(daysUntilExpire / (1000 * 60 * 60 * 24));
                 }
-
+                
                 let deletionText = '';
                 if (daysUntilInactivityDelete != null && daysUntilExpire != null) {
                     if (daysUntilExpire <= daysUntilInactivityDelete) {
@@ -259,14 +268,13 @@
                     deletionText = 'Soha';
                 }
 
-
-                container.innerHTML += `
+                newHtml += `
                 <div style="width: 80%; padding:10px; background-color: #EEEEEE; height: 50px; border-radius: 15px; display: flex; align-content: center; align-items: center; margin-bottom: 10px"
-                    class="userContainer" onclick="userClicked(this)" data-ismanual="${item.isManual}" data-comment="${escapeHtml(item.comment ?? '')}" data-username="${item.username}" data-ismanual="${item.isManual}" data-admin="${item.admin}" data-allowchangepassword="${item.allowChangePassword}" data-banned="${item.banned}" data-expireafterinactivedays="${item.expireAfterInactiveDays}" data-expireatdate="${item.expireAtDate}">
+                    class="userContainer" onclick="userClicked(this)" data-ismanual="${item.isManual}" data-comment="${escapeHtml(item.comment ?? '')}" data-username="${item.username}" data-admin="${item.admin}" data-allowchangepassword="${item.allowChangePassword}" data-banned="${item.banned}" data-expireafterinactivedays="${(item.expireAfterInactiveDays == null || item.expireAfterInactiveDays == -1) ? '' : item.expireAfterInactiveDays}" data-expireatdate="${(item.expireAtDate == null || item.expireAtDate == '' || item.expireAtDate == 'null') ? '' : item.expireAtDate}">
                     ${item.isManual == 1 ? manualUser(item.username) : azureUser(item.username)}
                     <div style="flex: 0.5; display: flex; flex-direction: column">
                         <p>Komment:</p>
-                        <p style="word-break: break-all;">${item.comment ?? 'Nincs'}</p>
+                        <p style="word-break: break-all;">${escapeHtml(item.comment ?? 'Nincs')}</p>
                     </div>
                     <div style="flex: 1; display: flex; flex-wrap: wrap;">
                         <div style="width: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center;">
@@ -281,6 +289,7 @@
                 </div>
                 `;
             }
+            container.innerHTML = newHtml;
         }
 
         function showPassword() {

@@ -1,4 +1,3 @@
-<!-- TODO: Allow device removal -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -192,7 +191,7 @@
                     macCounter[element.mac] += 1;
                 }
 
-                if (element.deviceBanned == 1) {
+                if (element.deviceBanned == 1 && !blockedDevices.includes(element.mac)) {
                     blockedDevices.push(element.mac);
                 }
             });
@@ -202,7 +201,7 @@
 
         async function updateList(data) {
             const container = document.getElementById('mainContainer');
-            container.innerHTML = '';
+            let newHtml = "";
 
             let userBefore = null;
             let devicesHtml = "";
@@ -211,17 +210,17 @@
                     if (userBefore !== null) {
                         // Close devices container
                         devicesHtml += '</div>';
-                        container.innerHTML += devicesHtml;
+                        newHtml += devicesHtml;
                         devicesHtml = '';
                     }
 
-                    container.innerHTML += separator;
+                    newHtml += separator;
 
                     const lastActive = new Date(item.userLastActive).toLocaleString();
-                    container.innerHTML += userTemplate(item.username, item.userComment, lastActive, item.userBanned);
+                    newHtml += userTemplate(item.username, item.userComment, lastActive, item.userBanned);
 
                     // Device container start
-                    devicesHtml += `<div style="padding:13px; display: flex; flex-wrap: wrap; width: 80%; justify-content: space-evenly" class="devicesContainer">`
+                    devicesHtml += `<div style="padding:13px; display: flex; flex-wrap: wrap; width: 80%; justify-content: space-evenly" class="devicesContainer">`;
 
                     userBefore = item.userID;
                 }
@@ -230,9 +229,12 @@
                 devicesHtml += devicesTemplate(item.mac, item.deviceComment, lastActive, item.userBanned, item.deviceBanned, macCounter[item.mac], item.userID, item.username);
             }
 
-            devicesHtml += '</div>';
-            container.innerHTML += devicesHtml;
-            container.innerHTML += separator;
+            if (data.length > 0) { 
+                devicesHtml += '</div>';
+                newHtml += devicesHtml;
+                newHtml += separator;
+            }
+            container.innerHTML = newHtml;
         }
 
 
@@ -374,15 +376,21 @@
 
         function searchBarUpdated() {
             const search = document.getElementById('search').value;
-            filteredDevices = allDevices.filter((item) => {
-                return item.mac.replaceAll('-', ':').toLowerCase().includes(search.toLowerCase()) ||
-                    item.username.toLowerCase().includes(search.toLowerCase()) ||
-                    item.userComment?.toLowerCase().includes(search.toLowerCase()) ||
-                    item.deviceComment?.toLowerCase().includes(search.toLowerCase());
-            });
-            filteredDevices.sort((a, b) => a.userID - b.userID);
+            let devicesToFilter = allDevices;
 
-            filteredDevices = applyFilters(filteredDevices);
+            if (search) {
+                const searchTerm = search.toLowerCase();
+                devicesToFilter = allDevices.filter((item) => {
+                    return item.mac.replaceAll('-', ':').toLowerCase().includes(searchTerm) ||
+                        item.username.toLowerCase().includes(searchTerm) ||
+                        (item.userComment && item.userComment.toLowerCase().includes(searchTerm)) ||
+                        (item.deviceComment && item.deviceComment.toLowerCase().includes(searchTerm));
+                });
+            }
+            
+            devicesToFilter.sort((a, b) => a.userID - b.userID);
+
+            filteredDevices = applyFilters(devicesToFilter);
 
             updateList(filteredDevices);
         }
