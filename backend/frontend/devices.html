@@ -80,8 +80,11 @@
             align-content: center;
             justify-content: center;
             align-items: center;">
-                <img src="./assets/filter.svg" style="cursor: pointer;" alt="" srcset="" width="30" height="30"
-                    onclick="searchButtonClicked()">
+                <div style="position: relative; display: inline-block; margin-right: 5px;">
+                    <img src="./assets/filter.svg" style="cursor: pointer; display: block;" alt="Szűrő" srcset="" width="30" height="30"
+                        onclick="searchButtonClicked()">
+                    <span id="filter-indicator-dot" style="position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; background-color: #FF4136; border-radius: 50%; display: none; border: 1px solid white;"></span>
+                </div>
                 <input type="text" name="search" id="search" class="passinput" placeholder="Keresés" oninput="debouncedDeviceSearch()">
             </div>
             <div style="width: 100%;
@@ -199,6 +202,16 @@
             updateList(data);
         }
 
+        function updateFilterIndicator() {
+            const indicator = document.getElementById('filter-indicator-dot');
+            if (!indicator) return;
+            if (filters.banned || filters.multiple) {
+                indicator.style.display = 'block';
+            } else {
+                indicator.style.display = 'none';
+            }
+        }
+
         async function updateList(data) {
             const container = document.getElementById('mainContainer');
             let newHtml = "";
@@ -235,6 +248,8 @@
                 newHtml += separator;
             }
             container.innerHTML = newHtml;
+            filteredDevices = applyFilters(data);
+            updateFilterIndicator();
         }
 
 
