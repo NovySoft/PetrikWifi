@@ -36,6 +36,21 @@
   showLoading();
   try {
     await checkAuth(true, true);
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('error') && urlParams.get('error') === 'microsoft_connection_error') {
+      let alertConfig = {
+        icon: 'error',
+        title: 'Hoppá...',
+        text: 'Nem sikerült kapcsolatot teremteni a Microsoft-tal. Kérlek próbáld újra később.',
+      };
+      if (urlParams.has('error_details')) {
+        alertConfig.text += `\n\nDetails: ${decodeURIComponent(urlParams.get('error_details'))}`;
+      }
+      Swal.fire(alertConfig).then(() => {
+        // Remove the error query parameter from the URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      });
+    }
   } catch(err) {
     console.error(err);
     Sentry.captureException(err);

@@ -95,41 +95,49 @@ fastify.register(oauthPlugin, {
 });
 
 fastify.get('/login/microsoft/callback', async function (request, reply) {
-    const { token } = await this.microsoftOAuth2.getAccessTokenFromAuthorizationCodeFlow(request)
+    try {
+        const { token } = await this.microsoftOAuth2.getAccessTokenFromAuthorizationCodeFlow(request)
 
-    const me = await (await fetch('https://graph.microsoft.com/v1.0/me', {
-        headers: {
-            Authorization: `Bearer ${token.access_token}`
+        const me = await (await fetch('https://graph.microsoft.com/v1.0/me', {
+            headers: {
+                Authorization: `Bearer ${token.access_token}`
+            }
+        })).json();
+
+        if (!me.userPrincipalName.toLowerCase().includes('@petrik.hu')) {
+            reply.status(403).send({
+                error: 'Forbidden',
+                code: 'PETRIK_HU_ONLY',
+                message: 'Only Petrik.hu users are allowed to login.',
+            });
+            return;
         }
-    })).json();
 
-    if (!me.userPrincipalName.toLowerCase().includes('@petrik.hu')) {
-        reply.status(403).send({
-            error: 'Forbidden',
-            code: 'PETRIK_HU_ONLY',
-            message: 'Only Petrik.hu users are allowed to login.',
-        });
-        return;
+        request.session.set('login', true);
+
+        const user = db.prepare('SELECT banned, admin, allowChangePassword FROM Users WHERE username = ?').get(me.userPrincipalName);
+        logger.silly(user);
+
+        if (user == null) {
+            request.session.set('user', me);
+        } else {
+            db.prepare('UPDATE Users SET lastActive = ? WHERE username = ?').run(Date.now(), me.userPrincipalName);
+            request.session.set('user', {
+                ...me,
+                isAdmin: user.admin === 1,
+                isBanned: user.banned === 1,
+                allowChangePassword: user.allowChangePassword === 1,
+            });
+        }
+
+        reply.redirect('/dashboard.html');
+    } catch (error) {
+        logger.error(error);
+        Sentry.captureException(error);
+        const errorMessage = encodeURIComponent(error.message);
+        // Redirect to index page with error query parameter
+        reply.redirect(`/index.html?error=microsoft_connection_error&error_details=${errorMessage}`);
     }
-
-    request.session.set('login', true);
-
-    const user = db.prepare('SELECT banned, admin, allowChangePassword FROM Users WHERE username = ?').get(me.userPrincipalName);
-    logger.silly(user);
-
-    if (user == null) {
-        request.session.set('user', me);
-    } else {
-        db.prepare('UPDATE Users SET lastActive = ? WHERE username = ?').run(Date.now(), me.userPrincipalName);
-        request.session.set('user', {
-            ...me,
-            isAdmin: user.admin === 1,
-            isBanned: user.banned === 1,
-            allowChangePassword: user.allowChangePassword === 1,
-        });
-    }
-
-    reply.redirect('/dashboard.html');
 })
 
 import secureSession from "@fastify/secure-session";
