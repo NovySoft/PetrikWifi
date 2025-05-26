@@ -134,7 +134,19 @@ fastify.get('/login/microsoft/callback', async function (request, reply) {
     } catch (error) {
         logger.error(error);
         Sentry.captureException(error);
-        const errorMessage = encodeURIComponent(error.message);
+        // Try to include more details in the error message
+        let errorDetails = error.message || 'Unknown error';
+        if (error.cause && typeof error.cause === 'object') {
+            if (error.cause.message) {
+            errorDetails += `: ${error.cause.message}`;
+            } else if (error.cause.code) {
+            errorDetails += `: ${error.cause.code}`;
+            }
+        }
+        if (error.code && !errorDetails.includes(error.code)) {
+            errorDetails += ` (${error.code})`;
+        }
+        const errorMessage = encodeURIComponent(errorDetails);
         // Redirect to index page with error query parameter
         reply.redirect(`/index.html?error=microsoft_connection_error&error_details=${errorMessage}`);
     }
