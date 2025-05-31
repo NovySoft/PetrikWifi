@@ -4,6 +4,21 @@ import * as Sentry from '@sentry/node';
 
 export const unifi = new Unifi.Controller({ host: process.env.UNIFI_HOST, port: process.env.UNIFI_PORT, sslverify: false });
 
+async function doTheConnection() {
+    try {
+        const loginData = await unifi.login(process.env.UNIFI_USERNAME, process.env.UNIFI_PASSWORD);
+        if (loginData === true) {
+            logger.debug('Connected to UniFi controller successfully');
+        } else {
+            logger.error('Failed to connect to UniFi controller:', loginData);
+            throw new Error('UniFi connection failed', loginData);
+        }
+    } catch (error) {
+        console.error('Error connecting to UniFi:', error);
+        Sentry.captureException(error);
+    }
+}
+
 export async function connectToUnifi() {
     if (!process.env.UNIFI_HOST || !process.env.UNIFI_PORT || !process.env.UNIFI_USERNAME || !process.env.UNIFI_PASSWORD) {
         logger.error('Missing UniFi environment variables: UNIFI_HOST, UNIFI_PORT, UNIFI_USERNAME, UNIFI_PASSWORD');
@@ -12,19 +27,16 @@ export async function connectToUnifi() {
     }
 
     setInterval(async () => {
-        try {
-            const loginData = await unifi.login(process.env.UNIFI_USERNAME, process.env.UNIFI_PASSWORD);
-            if (loginData === true) {
-                logger.info('Connected to UniFi controller successfully');
-            } else {
-                logger.error('Failed to connect to UniFi controller:', loginData);
-                throw new Error('UniFi connection failed', loginData);
-            }
-        } catch (error) {
-            console.error('Error connecting to UniFi:', error);
-            throw error;
-        }
+        doTheConnection();
     }, 60 * 1000); // Reconnect every 60 seconds
+
+    try {
+        await doTheConnection();
+        logger.info('Connected to UniFi controller');
+    } catch (error) {
+        logger.error('Failed to connect to UniFi controller:', error);
+        Sentry.captureException(error);
+    }
 }
 
 export async function updateUnifiClientName(mac, username) {
