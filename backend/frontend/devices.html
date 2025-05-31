@@ -121,9 +121,11 @@
         let filteredDevices = [];
         let macCounter = {};
         let blockedDevices = [];
+        let userDeviceTotalCounts = {};
         let filters = {
             banned: false,
             multiple: false,
+            minDeviceCount: 0,
         }
 
         const userBanned = `
@@ -187,7 +189,13 @@
             filteredDevices = data;
             allDevices = data;
 
+            userDeviceTotalCounts = {};
             allDevices.forEach(element => {
+                if (userDeviceTotalCounts[element.userID] == undefined) {
+                    userDeviceTotalCounts[element.userID] = 0;
+                }
+                userDeviceTotalCounts[element.userID] += 1;
+
                 if (macCounter[element.mac] == undefined) {
                     macCounter[element.mac] = 1;
                 } else {
@@ -205,7 +213,7 @@
         function updateFilterIndicator() {
             const indicator = document.getElementById('filter-indicator-dot');
             if (!indicator) return;
-            if (filters.banned || filters.multiple) {
+            if (filters.banned || filters.multiple || filters.minDeviceCount > 0) {
                 indicator.style.display = 'block';
             } else {
                 indicator.style.display = 'none';
@@ -418,6 +426,12 @@
                 if (filters.multiple && macCounter[x.mac] <= 1) {
                     return false;
                 }
+                if (filters.minDeviceCount > 0) {
+                    const userTotalDevices = userDeviceTotalCounts[x.userID] || 0;
+                    if (userTotalDevices <= filters.minDeviceCount) {
+                        return false;
+                    }
+                }
                 return true;
             });
         }
@@ -435,6 +449,10 @@
                     <div style="margin-top: 10px;">
                         <p style="display: inline-block; color: #f9a825">TÖBB FELHASZNÁLÓ</p>
                         <input type="checkbox" id="multiple" class="swal2-checkbox" onchange="filters.multiple = this.checked; searchBarUpdated();" ${filters.multiple ? 'checked' : ''}>
+                    </div>
+                    <div style="margin-top: 10px; display: flex; align-items: center;justify-content: center;">
+                        <p style="display: inline-block;">Több eszköz mint: </p>
+                        <input type="number" id="minDevice" class="swal2-input" style="display: inline-block; width: 80px; margin-left: 10px; margin-right: 0px;" value="${filters.minDeviceCount}" oninput="filters.minDeviceCount = parseInt(this.value) || 0; searchBarUpdated();">
                     </div>
                 `,
             });
