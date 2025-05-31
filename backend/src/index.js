@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/node";
 import Fastify from 'fastify';
 import logger from './logger.js';
 import { initDB, db } from './database.js';
+import { connectToUnifi } from './unifi.js';
 
 process.on('unhandledRejection', (reason, p) => {
     logger.fatal("Unhandled Rejection at: Promise ", p, " reason: ", reason);
@@ -289,6 +290,7 @@ logger.info('Cron job registered. Next 3 runs:', cronJob.nextRuns(3).map((date) 
 async function main() {
     try {
         initDB();
+        connectToUnifi();
         await fastify.listen({ port: 3000, host: '0.0.0.0' });
         logger.info('Server listening: 3000');
     } catch (err) {

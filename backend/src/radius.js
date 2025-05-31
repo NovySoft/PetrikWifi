@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/node';
 import logger from './logger.js';
 import { db } from './database.js';
 import { SUPER_SECRET_KEY, getKeyFromPassword, decrypt } from "./encryptor.js";
+import { updateUnifiClientName } from './unifi.js';
 export const FREERADIUS_IP = "172.18.1.2";
 
 export default async function handler(request, reply) {
@@ -132,6 +133,11 @@ export default async function handler(request, reply) {
             logger.debug(`RADIUS: Healthtest User: ${request.body.username} (${request.body.source}) auth info sent to ${request.body.destination}`);
         } else {
             logger.info(`RADIUS SUCCESS: ${request.body.username} (${request.body.source}) auth info sent to ${request.body.destination}`);
+
+            setTimeout(() => {
+                // Wait for 30 seconds to make sure unifi has logged our user, than update the client name
+                updateUnifiClientName(request.body.source.toLowerCase().replaceAll('-', ':'), request.body.username);
+            }, 30 * 1000);
         }
 
         //Clear all buffers - best practice
