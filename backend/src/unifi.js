@@ -28,6 +28,11 @@ export async function connectToUnifi() {
 }
 
 export async function updateUnifiClientName(mac, username) {
+    if (!process.env.UNIFI_HOST || !process.env.UNIFI_PORT || !process.env.UNIFI_USERNAME || !process.env.UNIFI_PASSWORD) {
+        // If UniFi environment variables are not set, skip the update
+        return;
+    }
+
     if (!mac || !username) {
         logger.error('MAC address and username are required to update client description');
         return;
