@@ -145,7 +145,17 @@
 
         const separator = `<hr style="height: 3px; width: 100%; color: black;">`;
 
-        const userTemplate = (username, comment, lastActive, isUserBanned) => `
+        const isOlderThan45Days = (dateString) => {
+            const date = new Date(dateString);
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 45);
+            return date < thirtyDaysAgo;
+        };
+
+        const userTemplate = (username, comment, lastActive, isUserBanned) => {
+            const lastActiveDate = new Date(lastActive);
+            const lastActiveStyle = isOlderThan45Days(lastActiveDate) ? 'style="color: #FFA500;"' : ''; // Light orange
+            return `
                 <div
                     style="margin-top: 10px; width: 80%; padding:10px; background-color: #EEEEEE; height: 50px; border-radius: 15px; display: flex; align-content: center; align-items: center; margin-bottom: 10px">
                     <div style="flex: 1; display: flex; flex-wrap: wrap;">
@@ -159,27 +169,30 @@
                                 ${isUserBanned ? userBanned : userNormal}
                             </div>
                             <div style="flex: 1">
-                                <p>Utoljára aktív: ${lastActive}</p>
+                                <p ${lastActiveStyle}>Utoljára aktív: ${lastActiveDate.toLocaleString()}</p>
                                 <p>Megjegyzés: ${comment ?? 'Nincs.'}</p>
                             </div>
                         </div>
                     </div>
                 </div>
-        `;
+        `};
 
 
-        const devicesTemplate = (mac, comment, lastActive, isUserBanned, deviceBanned, counter, userID, username) => `
+        const devicesTemplate = (mac, comment, lastActive, isUserBanned, deviceBanned, counter, userID, username) => {
+            const lastActiveDate = new Date(lastActive);
+            const lastActiveStyle = isOlderThan45Days(lastActiveDate) ? 'style="color: #FFA500;"' : ''; // Light orange
+            return `
                 <div class="device" onclick="devicePressed(this)" style="cursor: pointer" data-mac="${mac}" data-comment="${comment ?? ''}" data-banned="${deviceBanned}" data-userid="${userID}" data-username="${username}">
                     ${(isUserBanned || deviceBanned || blockedDevices.includes(mac)) ? userBanned : (counter > 1 ? deviceWarning : userNormal)}
                     ${isUserBanned ? '<p>Felhasználó letiltva</p>' : ''}
                     ${counter > 1 ? '<p>Az eszköz ' + counter + ' felhasználónál szerepel</p>' : ''}
                     ${(blockedDevices.includes(mac) && !deviceBanned) ? '<p>Ez az eszköz más felhasználónál van letiltva!</p>' : ''}
                     <br>
-                    <p>Utoljára aktív: ${lastActive}</p>
+                    <p ${lastActiveStyle}>Utoljára aktív: ${lastActiveDate.toLocaleString()}</p>
                     <p>MAC: ${mac.replaceAll('-', ':')}</p>
                     <p>Megjegyzés: ${comment ?? 'Nincs.'}</p>
                 </div>
-        `;
+        `};
 
         async function getAllDevices() {
             const res = await fetch('/getAllDevices', {
@@ -237,8 +250,7 @@
 
                     newHtml += separator;
 
-                    const lastActive = new Date(item.userLastActive).toLocaleString();
-                    newHtml += userTemplate(item.username, item.userComment, lastActive, item.userBanned);
+                    newHtml += userTemplate(item.username, item.userComment, item.userLastActive, item.userBanned);
 
                     // Device container start
                     devicesHtml += `<div style="padding:13px; display: flex; flex-wrap: wrap; width: 80%; justify-content: space-evenly" class="devicesContainer">`;
@@ -246,8 +258,7 @@
                     userBefore = item.userID;
                 }
 
-                const lastActive = new Date(item.deviceLastActive).toLocaleString();
-                devicesHtml += devicesTemplate(item.mac, item.deviceComment, lastActive, item.userBanned, item.deviceBanned, macCounter[item.mac], item.userID, item.username);
+                devicesHtml += devicesTemplate(item.mac, item.deviceComment, item.deviceLastActive, item.userBanned, item.deviceBanned, macCounter[item.mac], item.userID, item.username);
             }
 
             if (data.length > 0) { 
