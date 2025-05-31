@@ -122,10 +122,14 @@
         let macCounter = {};
         let blockedDevices = [];
         let userDeviceTotalCounts = {};
+        let userUnusedDeviceCounts = {};
+        let userActiveDeviceCounts = {};
         let filters = {
             banned: false,
             multiple: false,
             minDeviceCount: 0,
+            onlyUnused: false,
+            onlyActive: false,
         }
 
         const userBanned = `
@@ -203,11 +207,20 @@
             allDevices = data;
 
             userDeviceTotalCounts = {};
+            userUnusedDeviceCounts = {};
+            userActiveDeviceCounts = {};
             allDevices.forEach(element => {
                 if (userDeviceTotalCounts[element.userID] == undefined) {
                     userDeviceTotalCounts[element.userID] = 0;
                 }
                 userDeviceTotalCounts[element.userID] += 1;
+
+                const deviceIsUnused = isOlderThan45Days(element.deviceLastActive);
+                if (deviceIsUnused) {
+                    userUnusedDeviceCounts[element.userID] = (userUnusedDeviceCounts[element.userID] || 0) + 1;
+                } else {
+                    userActiveDeviceCounts[element.userID] = (userActiveDeviceCounts[element.userID] || 0) + 1;
+                }
 
                 if (macCounter[element.mac] == undefined) {
                     macCounter[element.mac] = 1;
@@ -226,7 +239,7 @@
         function updateFilterIndicator() {
             const indicator = document.getElementById('filter-indicator-dot');
             if (!indicator) return;
-            if (filters.banned || filters.multiple || filters.minDeviceCount > 0) {
+            if (filters.banned || filters.multiple || filters.minDeviceCount > 0 || filters.onlyUnused || filters.onlyActive) {
                 indicator.style.display = 'block';
             } else {
                 indicator.style.display = 'none';
@@ -430,16 +443,40 @@
         }
 
         function applyFilters(data) {
+            // Calculate user device counts based on the current active/unused filter state
+            // This count is for the purpose of the minDeviceCount filter
+            let countsToUseForMinDevice;
+            if (filters.onlyUnused) {
+                countsToUseForMinDevice = userUnusedDeviceCounts;
+            } else if (filters.onlyActive) {
+                countsToUseForMinDevice = userActiveDeviceCounts;
+            } else {
+                countsToUseForMinDevice = userDeviceTotalCounts;
+            }
+
             return data.filter(x => {
+                // Filter 1: Banned devices
                 if (filters.banned && x.deviceBanned == 0) {
                     return false;
                 }
+                // Filter 2: Multiple users for a device
                 if (filters.multiple && macCounter[x.mac] <= 1) {
                     return false;
                 }
+                
+                // Filter 3: Active/Unused devices
+                const deviceIsUnused = isOlderThan45Days(x.deviceLastActive);
+                if (filters.onlyUnused && !deviceIsUnused) {
+                    return false;
+                }
+                if (filters.onlyActive && deviceIsUnused) {
+                    return false;
+                }
+
+                // Filter 4: Min device count for the user
                 if (filters.minDeviceCount > 0) {
-                    const userTotalDevices = userDeviceTotalCounts[x.userID] || 0;
-                    if (userTotalDevices <= filters.minDeviceCount) {
+                    const userDeviceCount = countsToUseForMinDevice[x.userID] || 0;
+                    if (userDeviceCount <= filters.minDeviceCount) {
                         return false;
                     }
                 }
@@ -460,6 +497,19 @@
                     <div style="margin-top: 10px;">
                         <p style="display: inline-block; color: #f9a825">TÖBB FELHASZNÁLÓ</p>
                         <input type="checkbox" id="multiple" class="swal2-checkbox" onchange="filters.multiple = this.checked; searchBarUpdated();" ${filters.multiple ? 'checked' : ''}>
+                    </div>
+                    <hr>
+                    <div style="margin-top: 10px;">
+                        <p style="display: inline-block;">CSAK INAKTÍV (45+ napja)</p>
+                        <input type="checkbox" id="filterOnlyUnused" class="swal2-checkbox" 
+                               onchange="filters.onlyUnused = this.checked; if (this.checked && filters.onlyActive) { filters.onlyActive = false; const cb = document.getElementById('filterOnlyActive'); if(cb) cb.checked = false; } searchBarUpdated();" 
+                               ${filters.onlyUnused ? 'checked' : ''}>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <p style="display: inline-block;">CSAK AKTÍV (&lt;45 napja)</p>
+                        <input type="checkbox" id="filterOnlyActive" class="swal2-checkbox" 
+                               onchange="filters.onlyActive = this.checked; if (this.checked && filters.onlyUnused) { filters.onlyUnused = false; const cb = document.getElementById('filterOnlyUnused'); if(cb) cb.checked = false; } searchBarUpdated();" 
+                               ${filters.onlyActive ? 'checked' : ''}>
                     </div>
                     <div style="margin-top: 10px; display: flex; align-items: center;justify-content: center;">
                         <p style="display: inline-block;">Több eszköz mint: </p>
