@@ -26,10 +26,6 @@ export async function connectToUnifi() {
         return;
     }
 
-    setInterval(async () => {
-        doTheConnection();
-    }, 60 * 1000); // Reconnect every 60 seconds
-
     try {
         await doTheConnection();
         logger.info('Connected to UniFi controller');
@@ -51,6 +47,7 @@ export async function updateUnifiClientName(mac, username) {
     }
 
     try {
+        await doTheConnection();
         const device = await unifi.getClientDevice(mac.toLowerCase().replaceAll('-', ':'));
         if (device == null || device.length !== 1) {
             logger.error(`Device with MAC ${mac} not found`);
@@ -65,6 +62,6 @@ export async function updateUnifiClientName(mac, username) {
         }
     } catch (error) {
         logger.error('Error updating client description:', error);
-        Sentry.captureException(err);
+        Sentry.captureException(error);
     }
 }
