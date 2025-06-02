@@ -134,10 +134,18 @@ export default async function handler(request, reply) {
         } else {
             logger.info(`RADIUS SUCCESS: ${request.body.username} (${request.body.source}) auth info sent to ${request.body.destination}`);
 
-            setTimeout(() => {
-                // Wait for 30 seconds to make sure unifi has logged our user, than update the client name
-                updateUnifiClientName(request.body.source.toLowerCase().replaceAll('-', ':'), request.body.username);
-            }, 30 * 1000);
+            // Debounce updates per client to avoid multiple calls in a short period
+            if (!globalThis.unifiUpdateTimeouts) {
+                globalThis.unifiUpdateTimeouts = new Map();
+            }
+            const clientKey = request.body.source.toLowerCase().replaceAll('-', ':');
+            if (!globalThis.unifiUpdateTimeouts.has(clientKey)) {
+                const timeout = setTimeout(() => {
+                    updateUnifiClientName(clientKey, request.body.username);
+                    globalThis.unifiUpdateTimeouts.delete(clientKey);
+                }, 30 * 1000); // 30 seconds debounce, to make sure we unifi has time to log the user as online
+                globalThis.unifiUpdateTimeouts.set(clientKey, timeout);
+            }
         }
 
         //Clear all buffers - best practice
