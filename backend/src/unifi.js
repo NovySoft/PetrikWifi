@@ -56,10 +56,7 @@ export async function updateUnifiClientName(mac, username) {
 
         const newName = `${device[0].hostname ?? 'NoHostname'} - ${username}`;
         const result = await unifi.setClientName(device[0]._id, newName);
-
-        if (result === true) {
-            logger.info(`Updated client name for ${mac} to "${newName}"`);
-        }
+        logger.debug(`Updated client name for ${mac} to "${newName}"`, result);
     } catch (error) {
         logger.error('Error updating client description:', error);
         Sentry.captureException(error);
