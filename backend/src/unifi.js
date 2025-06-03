@@ -28,6 +28,15 @@ export async function connectToUnifi() {
 
     try {
         await doTheConnection();
+        setInterval(async () =>{
+            await unifi.logout();
+            logger.debug('Logged out from UniFi controller');
+            // Wait a bit before reconnecting
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            logger.debug('Reconnecting to UniFi controller...');
+            await doTheConnection();
+            logger.debug('Reconnected to UniFi controller');
+        }, 1000 * 60 * 5); // Keep the connection alive every 5 minutes
         logger.info('Connected to UniFi controller');
     } catch (error) {
         logger.error('Failed to connect to UniFi controller:', error);
