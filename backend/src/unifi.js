@@ -28,14 +28,19 @@ export async function connectToUnifi() {
 
     try {
         await doTheConnection();
-        setInterval(async () =>{
-            await unifi.logout();
-            logger.debug('Logged out from UniFi controller');
-            // Wait a bit before reconnecting
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            logger.debug('Reconnecting to UniFi controller...');
-            await doTheConnection();
-            logger.debug('Reconnected to UniFi controller');
+        setInterval(async () => {
+            try {
+                await unifi.logout();
+                logger.debug('Logged out from UniFi controller');
+                // Wait a bit before reconnecting
+                await new Promise(resolve => setTimeout(resolve, 500));
+                logger.debug('Reconnecting to UniFi controller...');
+                await doTheConnection();
+                logger.debug('Reconnected to UniFi controller');
+            } catch (error) {
+                logger.error('Failed to REconnect to UniFi controller:', error);
+                Sentry.captureException(error);
+            }
         }, 1000 * 60 * 5); // Keep the connection alive every 5 minutes
         logger.info('Connected to UniFi controller');
     } catch (error) {
