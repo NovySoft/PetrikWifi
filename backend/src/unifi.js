@@ -2,7 +2,13 @@ import Unifi from 'node-unifi';
 import logger from './logger.js';
 import * as Sentry from '@sentry/node';
 
-export const unifi = new Unifi.Controller({ host: process.env.UNIFI_HOST, port: process.env.UNIFI_PORT, sslverify: false });
+export const unifi = new Unifi.Controller({
+    host: process.env.UNIFI_HOST,
+    port: process.env.UNIFI_PORT,
+    username: process.env.UNIFI_USERNAME,
+    password: process.env.UNIFI_PASSWORD,
+    sslverify: false,
+});
 
 async function doTheConnection() {
     try {
@@ -28,20 +34,6 @@ export async function connectToUnifi() {
 
     try {
         await doTheConnection();
-        setInterval(async () => {
-            try {
-                await unifi.logout();
-                logger.debug('Logged out from UniFi controller');
-                // Wait a bit before reconnecting
-                await new Promise(resolve => setTimeout(resolve, 500));
-                logger.debug('Reconnecting to UniFi controller...');
-                await doTheConnection();
-                logger.debug('Reconnected to UniFi controller');
-            } catch (error) {
-                logger.error('Failed to REconnect to UniFi controller:', error);
-                Sentry.captureException(error);
-            }
-        }, 1000 * 60 * 5); // Keep the connection alive every 5 minutes
         logger.info('Connected to UniFi controller');
     } catch (error) {
         logger.error('Failed to connect to UniFi controller:', error);
@@ -71,6 +63,7 @@ export async function updateUnifiClientName(mac, username) {
         const newName = `${device[0].hostname ?? 'NoHostname'} - ${username}`;
         const result = await unifi.setClientName(device[0]._id, newName);
         logger.debug(`Updated client name for ${mac} to "${newName}"`, result);
+        await unifi.logout();
     } catch (error) {
         logger.error('Error updating client description:', error);
         Sentry.captureException(error);
