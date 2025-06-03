@@ -55,11 +55,11 @@ export async function updateUnifiClientName(mac, username) {
 
     try {
         await unifi.logout();
-        await Promise.resolve(new Promise(resolve => setTimeout(resolve, 500)));
+        await Promise.resolve(new Promise(resolve => setTimeout(resolve, 50)));
 
         //Wait for 50ms to ensure the connection is established
         await doTheConnection();
-        await Promise.resolve(new Promise(resolve => setTimeout(resolve, 500)));
+        await Promise.resolve(new Promise(resolve => setTimeout(resolve, 50)));
         
         const device = await unifi.getClientDevice(mac.toLowerCase().replaceAll('-', ':'));
         if (device == null || device.length !== 1) {
