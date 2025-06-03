@@ -12,6 +12,7 @@ export const unifi = new Unifi.Controller({
 
 async function doTheConnection() {
     try {
+        unifi._isInit = false; // Reset the connection state
         const loginData = await unifi.login(process.env.UNIFI_USERNAME, process.env.UNIFI_PASSWORD);
         if (loginData === true) {
             logger.debug('Connected to UniFi controller successfully');
@@ -53,17 +54,23 @@ export async function updateUnifiClientName(mac, username) {
     }
 
     try {
+        await unifi.logout();
+        await Promise.resolve(new Promise(resolve => setTimeout(resolve, 500)));
+
+        //Wait for 50ms to ensure the connection is established
         await doTheConnection();
+        await Promise.resolve(new Promise(resolve => setTimeout(resolve, 500)));
+        
         const device = await unifi.getClientDevice(mac.toLowerCase().replaceAll('-', ':'));
         if (device == null || device.length !== 1) {
             logger.error(`Device with MAC ${mac} not found`);
             return;
         }
+        logger.debug(`Found device with MAC ${mac}:`, device[0]);
 
         const newName = `${device[0].hostname ?? 'NoHostname'} - ${username}`;
         const result = await unifi.setClientName(device[0]._id, newName);
         logger.debug(`Updated client name for ${mac} to "${newName}"`, result);
-        await unifi.logout();
     } catch (error) {
         logger.error('Error updating client description:', error);
         Sentry.captureException(error);
