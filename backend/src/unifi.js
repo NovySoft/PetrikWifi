@@ -54,13 +54,18 @@ export async function updateUnifiClientName(mac, username) {
     }
 
     try {
-        await unifi.logout();
-        await Promise.resolve(new Promise(resolve => setTimeout(resolve, 50)));
+        try {
+            await unifi.logout();
+            await Promise.resolve(new Promise(resolve => setTimeout(resolve, 50)));
+        } catch (error) {
+            logger.warn('Error during logout - Session might have expired, continuing with connection:', error);
+            Sentry.captureException(error);
+        }
 
         //Wait for 50ms to ensure the connection is established
         await doTheConnection();
         await Promise.resolve(new Promise(resolve => setTimeout(resolve, 50)));
-        
+
         const device = await unifi.getClientDevice(mac.toLowerCase().replaceAll('-', ':'));
         if (device == null || device.length !== 1) {
             logger.error(`Device with MAC ${mac} not found`);
