@@ -141,8 +141,14 @@ export default async function handler(request, reply) {
             const clientKey = request.body.source.toLowerCase().replaceAll('-', ':');
             if (!globalThis.unifiUpdateTimeouts.has(clientKey)) {
                 const timeout = setTimeout(() => {
-                    updateUnifiClientName(clientKey, request.body.username);
-                    globalThis.unifiUpdateTimeouts.delete(clientKey);
+                    try {
+                        updateUnifiClientName(clientKey, request.body.username);
+                    } catch (error) {
+                        logger.error('Error in updateUnifiClientName within setTimeout:', error);
+                        Sentry.captureException(error);
+                    } finally {
+                        globalThis.unifiUpdateTimeouts.delete(clientKey);
+                    }
                 }, 30 * 1000); // 30 seconds debounce, to make sure we unifi has time to log the user as online
                 globalThis.unifiUpdateTimeouts.set(clientKey, timeout);
             }

@@ -23,6 +23,7 @@ async function doTheConnection() {
     } catch (error) {
         console.error('Error connecting to UniFi:', error);
         Sentry.captureException(error);
+        await Sentry.flush(5000); // Wait for Sentry to send the event
     }
 }
 
@@ -39,6 +40,7 @@ export async function connectToUnifi() {
     } catch (error) {
         logger.error('Failed to connect to UniFi controller:', error);
         Sentry.captureException(error);
+        await Sentry.flush(5000); // Wait for Sentry to send the event
     }
 }
 
@@ -60,6 +62,7 @@ export async function updateUnifiClientName(mac, username) {
         } catch (error) {
             logger.warn('Error during logout - Session might have expired, continuing with connection:', error);
             Sentry.captureException(error);
+            await Sentry.flush(5000); // Wait for Sentry to send the event
         }
 
         //Wait for 50ms to ensure the connection is established
@@ -79,5 +82,6 @@ export async function updateUnifiClientName(mac, username) {
     } catch (error) {
         logger.error('Error updating client description:', error);
         Sentry.captureException(error);
+        await Sentry.flush(5000); // Wait for Sentry to send the event
     }
 }
