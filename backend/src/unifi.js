@@ -21,7 +21,7 @@ async function doTheConnection() {
             throw new Error('UniFi connection failed', loginData);
         }
     } catch (error) {
-        console.error('Error connecting to UniFi:', error);
+        logger.error('Error connecting to UniFi:', error);
         Sentry.captureException(error);
         await Sentry.flush(5000); // Wait for Sentry to send the event
     }
