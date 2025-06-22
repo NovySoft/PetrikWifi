@@ -47,7 +47,7 @@ export default async function handler(request, reply) {
                     code: 'FORBIDDEN',
                     message: 'You are not allowed to access this resource.',
                 });
-                logger.warn(`RADIUS: Request from ${request.body.destination} is not an allowed NAS.`, request.body);
+                logger.warn(`RADIUS: Request from ${request.body.NAS} (${request.body.destination}) is not an allowed NAS.`, request.body);
                 return;
             }
 
@@ -58,7 +58,7 @@ export default async function handler(request, reply) {
                     code: 'FORBIDDEN',
                     message: 'You are not allowed to access this resource.',
                 });
-                logger.warn(`RADIUS: Request from ${request.body.IP} is not an allowed IP address of ${request.body.destination}. Expected: ${nas.IP}`, request.body);
+                logger.warn(`RADIUS: Request from ${request.body.IP} is not an allowed IP address of ${request.body.NAS} (${request.body.destination}). Expected: ${nas.IP}`, request.body);
                 return;
             }
         }
@@ -130,9 +130,9 @@ export default async function handler(request, reply) {
             });
 
         if (request.body.username === 'radtest') {
-            logger.debug(`RADIUS: Healthtest User: ${request.body.username} (${request.body.source}) auth info sent to ${request.body.destination}`);
+            logger.debug(`RADIUS: Healthtest User: ${request.body.username} (${request.body.source}) auth info sent to ${request.body.NAS} (${request.body.destination})`);
         } else {
-            logger.info(`RADIUS SUCCESS: ${request.body.username} (${request.body.source}) auth info sent to ${request.body.destination}`);
+            logger.info(`RADIUS SUCCESS: ${request.body.username} (${request.body.source}) auth info sent to ${request.body.NAS} (${request.body.destination})`);
 
             // Debounce updates per client to avoid multiple calls in a short period
             if (!globalThis.unifiUpdateTimeouts) {
