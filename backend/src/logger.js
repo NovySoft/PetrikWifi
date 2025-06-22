@@ -1,5 +1,6 @@
 import { Logger } from "tslog";
 import { createStream } from "rotating-file-stream";
+import { inspect } from "util";
 
 const pad = num => (num > 9 ? "" : "0") + num;
 const fileNameGenerator = (time, index) => {
@@ -40,15 +41,37 @@ const logger = new Logger({
 });
 logger.attachTransport((logObj) => {
     const prefix = `${logObj._meta.date.toLocaleString('hu-HU', { timeZone: "Europe/Budapest" })} ${logObj._meta.logLevelName}: `
-    const out = prefix + Object.values({ ...logObj, _meta: '' }).join(' ');
-    stream.write(out + "\n");
-    if (logObj._meta.logLevelName === 'ERROR' || logObj._meta.logLevelName === 'FATAL') {
-        // Log to error stream as well
-        if (logObj._meta.path.fullFilePath != undefined) {
-            errStream.write(`(${logObj._meta.path.fullFilePath}) `);
+    let out = prefix;
+
+    // Extract 5 depths of nested objects using util.inspect
+    const copyOfMeta = { ...logObj._meta };
+    delete logObj._meta;
+    const objValues = Object.values(logObj);
+
+    if (objValues.length === 1 && typeof objValues[0] === 'string') {
+        out += objValues.join(' ');
+    } else {
+        if ('0' in logObj && logObj['0'] !== undefined && logObj['0'] !== null && typeof logObj['0'] === 'string') {
+            out += logObj['0'];
+            delete logObj['0'];
         }
-        errStream.write(out);
-        errStream.write("\n");
+        if (Object.keys(logObj).length > 0) {
+            out += "\n";
+            out += inspect(logObj, {
+                depth: 5,
+                colors: false,
+            });
+        }
+    }
+
+    stream.write(out + "\n");
+
+    // Log errors and fatal logs to a separate file as well
+    if (copyOfMeta.logLevelName === 'ERROR' || copyOfMeta.logLevelName === 'FATAL') {
+        if (copyOfMeta.path.fullFilePath != undefined) {
+            errStream.write(`(${copyOfMeta.path.fullFilePath}) `);
+        }
+        errStream.write(out + "\n");
     }
 });
 
