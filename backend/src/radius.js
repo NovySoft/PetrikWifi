@@ -140,9 +140,9 @@ export default async function handler(request, reply) {
             }
             const clientKey = request.body.source.toLowerCase().replaceAll('-', ':');
             if (!globalThis.unifiUpdateTimeouts.has(clientKey)) {
-                const timeout = setTimeout(() => {
+                const timeout = setTimeout(async () => {
                     try {
-                        updateUnifiClientName(clientKey, request.body.username);
+                        await updateUnifiClientName(clientKey, request.body.username);
                     } catch (error) {
                         logger.error('Error in updateUnifiClientName within setTimeout:', error);
                         Sentry.captureException(error);

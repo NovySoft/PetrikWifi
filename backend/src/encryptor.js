@@ -85,9 +85,9 @@ export const encrypt = (messagetext, key) => {
  * and the key from lingering in the memory
  */
 export const decrypt = (ciphertext, key) => {
-    const authTag = ciphertext.slice(-16);
-    const iv = ciphertext.slice(0, 12);
-    const encryptedMessage = ciphertext.slice(12, -16);
+    const authTag = ciphertext.subarray(-16);
+    const iv = ciphertext.subarray(0, 12);
+    const encryptedMessage = ciphertext.subarray(12, -16);
     const decipher = crypto.createDecipheriv(
         ALGORITHM.BLOCK_CIPHER, key, iv,
         { 'authTagLength': ALGORITHM.AUTH_TAG_BYTE_LEN });
