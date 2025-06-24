@@ -2,8 +2,6 @@ import { db } from '../../database.js';
 import { getSalt, SUPER_SECRET_KEY, getKeyFromPassword, encrypt } from '../../encryptor.js';
 import logger from '../../logger.js';
 
-//TODO: User-Mac binding/allowlist
-
 export default async function updateUser(req, res) {
     if (req.session.get('login') !== true) {
         res.status(403).send({
@@ -95,6 +93,12 @@ export default async function updateUser(req, res) {
 
     if (req.body.isManual != undefined) {
         update.isManual = req.body.isManual ? 1 : 0;
+    }
+
+    if (req.body.allowedDevices == "" || req.body.allowedDevices == [] || req.body.allowedDevices == "[]") {
+        update.allowedDevices = null;
+    } else if (req.body.allowedDevices != undefined) {
+        update.allowedDevices = JSON.stringify(req.body.allowedDevices);
     }
 
     db.prepare(`UPDATE Users SET ${Object.keys(update).map(key => `${key} = ?`).join(', ')}, lastActive = ? WHERE username = ?`).run(

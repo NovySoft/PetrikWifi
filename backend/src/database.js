@@ -21,7 +21,8 @@ export function initDB() {
 	    lastActive INTEGER,
 		expireAfterInactiveDays INTEGER DEFAULT (100),
 		expireAtDate INTEGER,
-		comment TEXT
+		comment TEXT,
+		allowedDevices TEXT
     );
     `);
 

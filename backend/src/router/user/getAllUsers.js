@@ -1,4 +1,5 @@
 import { db } from '../../database.js';
+import logger from '../../logger.js';
 
 export default async function getAllUsers(req, rep) {
     if (req.session?.get('login') !== true) {
@@ -21,6 +22,18 @@ export default async function getAllUsers(req, rep) {
 
     db.prepare('UPDATE Users SET lastActive = ? WHERE username = ?').run(Date.now(), req.session.get('user').userPrincipalName);
 
-    const users = db.prepare('SELECT username, isManual, allowChangePassword, admin, banned, lastActive, expireAfterInactiveDays, expireAtDate, comment FROM Users').all();
+    const users = db.prepare('SELECT username, isManual, allowChangePassword, admin, banned, lastActive, expireAfterInactiveDays, expireAtDate, comment, allowedDevices FROM Users').all();
+    for (const user of users) {
+        if (user.allowedDevices != null && user.allowedDevices !== '') {
+            try {
+                user.allowedDevices = JSON.parse(user.allowedDevices);
+            } catch (e) {
+                logger.error('Error parsing allowedDevices:', e);
+                user.allowedDevices = [];
+            }
+        } else {
+            user.allowedDevices = [];
+        }
+    }
     rep.status(200).send(users);
 }

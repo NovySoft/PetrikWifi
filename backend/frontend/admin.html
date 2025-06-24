@@ -72,14 +72,16 @@
                     height="30" onclick="window.location.href = '/logs.html'">
                 <img src="./assets/devices.svg" style="cursor: pointer;margin-right: 5px" alt="" srcset="" width="30"
                     height="30" onclick="window.location.href = '/devices.html'">
-                <img src="./assets/createUser.svg" style="cursor: pointer; margin-right: 5px;" alt="" srcset="" width="30" height="30"
-                    onclick="createNewUser()">
+                <img src="./assets/createUser.svg" style="cursor: pointer; margin-right: 5px;" alt="" srcset=""
+                    width="30" height="30" onclick="createNewUser()">
                 <div style="position: relative; display: inline-block; margin-right: 5px;">
-                    <img src="./assets/filter.svg" style="cursor: pointer; display: block;" alt="Szűrő" srcset="" width="30" height="30"
-                        onclick="searchButtonClicked()">
-                    <span id="filter-indicator-dot" style="position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; background-color: #FF4136; border-radius: 50%; display: none; border: 1px solid white;"></span>
+                    <img src="./assets/filter.svg" style="cursor: pointer; display: block;" alt="Szűrő" srcset=""
+                        width="30" height="30" onclick="searchButtonClicked()">
+                    <span id="filter-indicator-dot"
+                        style="position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; background-color: #FF4136; border-radius: 50%; display: none; border: 1px solid white;"></span>
                 </div>
-                <input type="text" name="search" id="search" class="passinput" placeholder="Keresés" oninput="debouncedSearch()">
+                <input type="text" name="search" id="search" class="passinput" placeholder="Keresés"
+                    oninput="debouncedSearch()">
             </div>
             <div style="width: 100%;
             display: flex;
@@ -104,7 +106,7 @@
     <script>
         function debounce(func, delay) {
             let timeoutId;
-            return function(...args) {
+            return function (...args) {
                 clearTimeout(timeoutId);
                 timeoutId = setTimeout(() => {
                     func.apply(this, args);
@@ -154,6 +156,10 @@
             <img src="./assets/banned.svg" alt="LETILTVA" srcset="" width="45" class="icons" height="45" title="LETILTVA">
         `;
 
+        const whitelistUser = `
+            <img src="./assets/whitelist.svg" alt="Fehérlista" srcset="" width="45" class="icons" height="45" title="Fehérlista">
+        `;
+
         async function getAllUsers() {
             const res = await fetch('/getAllUsers', {
                 method: 'POST',
@@ -186,9 +192,9 @@
 
         function searchBarUpdated() {
             const search = document.getElementById('search').value;
-            let usersToFilter = allUsers; 
+            let usersToFilter = allUsers;
 
-            if (search) { 
+            if (search) {
                 const searchTerm = search.toLowerCase();
                 usersToFilter = allUsers.filter((user) =>
                     user.username.toLowerCase().includes(searchTerm) ||
@@ -196,7 +202,7 @@
                 );
             }
 
-            filteredUsers = applyFilters(usersToFilter); 
+            filteredUsers = applyFilters(usersToFilter);
             updateList(filteredUsers);
         }
 
@@ -232,9 +238,10 @@
 
         function updateList(data) {
             const container = document.getElementById('mainContainer');
-            let newHtml = ""; 
+            let newHtml = "";
             for (const item of data) {
                 let iconSet = `
+                            ${item.allowedDevices?.length > 0 ? whitelistUser : ''}
                             ${item.allowChangePassword == 1 ? canChangePassword : canTChangePassword}
                             ${item.admin == 1 ? isAdmin : isNotAdmin}
                 `;
@@ -253,7 +260,7 @@
                     daysUntilExpire = Number(item.expireAtDate) - Date.now();
                     daysUntilExpire = Math.floor(daysUntilExpire / (1000 * 60 * 60 * 24));
                 }
-                
+
                 let deletionText = '';
                 if (daysUntilInactivityDelete != null && daysUntilExpire != null) {
                     if (daysUntilExpire <= daysUntilInactivityDelete) {
@@ -283,11 +290,13 @@
 
                 newHtml += `
                 <div style="width: 80%; padding:10px; background-color: #EEEEEE; height: 50px; border-radius: 15px; display: flex; align-content: center; align-items: center; margin-bottom: 10px"
-                    class="userContainer" onclick="userClicked(this)" data-ismanual="${item.isManual}" data-comment="${escapeHtml(item.comment ?? '')}" data-username="${item.username}" data-admin="${item.admin}" data-allowchangepassword="${item.allowChangePassword}" data-banned="${item.banned}" data-expireafterinactivedays="${(item.expireAfterInactiveDays == null || item.expireAfterInactiveDays == -1) ? '' : item.expireAfterInactiveDays}" data-expireatdate="${(item.expireAtDate == null || item.expireAtDate == '' || item.expireAtDate == 'null') ? '' : item.expireAtDate}">
+                    class="userContainer" onclick="userClicked(this)" data-ismanual="${item.isManual}" data-comment="${escapeHtml(item.comment ?? '')}" data-username="${item.username}" data-admin="${item.admin}" data-allowchangepassword="${item.allowChangePassword}" data-banned="${item.banned}" data-expireafterinactivedays="${(item.expireAfterInactiveDays == null || item.expireAfterInactiveDays == -1) ? '' : item.expireAfterInactiveDays}" data-expireatdate="${(item.expireAtDate == null || item.expireAtDate == '' || item.expireAtDate == 'null') ? '' : item.expireAtDate}" data-alloweddevices="${item.allowedDevices ? item.allowedDevices.join('\n') : ''}">
                     ${item.isManual == 1 ? manualUser(item.username) : azureUser(item.username)}
                     <div style="flex: 0.5; display: flex; flex-direction: column">
                         <p>Komment:</p>
-                        <p style="word-break: break-all;">${escapeHtml(item.comment ?? 'Nincs')}</p>
+                        <p style="word-break: break-all;">${escapeHtml(
+                            (item.comment == null || item.comment?.length == 0) ? 'Nincs' : item.comment
+                        )}</p>
                     </div>
                     <div style="flex: 1; display: flex; flex-wrap: wrap;">
                         <div style="width: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center;">
@@ -363,8 +372,10 @@
                     <p style="display: inline-block; color: red">LETILTÁS</p>
                     <input type="checkbox" id="banned" class="swal2-checkbox" ${event.dataset.banned == 1 ? 'checked' : ''} onchange="if(this.checked){ document.getElementById('admin').checked = false; document.getElementById('expireAfterInactiveDays').value = '365'; }">
                 </div>
-                <p class="swal-ctext">Megjegyzés</p>
-                <textarea id="comment" class="swal2-textarea" placeholder="Megjegyzés">${event.dataset.comment ?? ''}</textarea>
+                <p class="swal-ctext" style="margin-top: 10px; margin-bottom: 2px">Engedélyezett eszközök</p>
+                <textarea id="alloweddevices" class="swal2-textarea" style="margin-top: 0; width: 80%" placeholder="MAC címek új sorral elvásztva (üres = nincs korlátozás)">${event.dataset.alloweddevices ?? ''}</textarea>
+                <p class="swal-ctext" style="margin-top: 10px; margin-bottom: 2px">Megjegyzés</p>
+                <textarea id="comment" class="swal2-textarea" style="margin-top: 0; width: 80%" placeholder="Megjegyzés">${event.dataset.comment ?? ''}</textarea>
                 `,
                 showCancelButton: true,
                 confirmButtonText: 'Mentés',
@@ -382,6 +393,7 @@
                 const banned = document.getElementById('banned').checked ? 1 : 0;
                 const comment = document.getElementById('comment').value;
                 const isManual = document.getElementById('manual').checked ? 1 : 0;
+                let allowedDevices = document.getElementById('alloweddevices').value;
 
                 if (expireAfterInactiveDays == event.dataset.expireafterinactivedays &&
                     expireAtDate == event.dataset.expireatdate &&
@@ -390,7 +402,8 @@
                     banned == event.dataset.banned &&
                     comment == event.dataset.comment &&
                     isManual == event.dataset.ismanual &&
-                    password == '' && passwordAgain == '') {
+                    password == '' && passwordAgain == '' &&
+                    allowedDevices == event.dataset.alloweddevices) {
                     // Nothing changed
                     return;
                 }
@@ -415,6 +428,10 @@
 
                 showLoading();
 
+                if (allowedDevices == '' || allowedDevices.length == 0 || allowedDevices == null) {
+                    allowedDevices = "";
+                }
+
                 try {
                     const res = await fetch('/updateUser', {
                         method: 'POST',
@@ -430,7 +447,8 @@
                             allowChangePassword,
                             banned,
                             comment,
-                            isManual
+                            isManual,
+                            allowedDevices: allowedDevices != null ? allowedDevices.split('\n').map(mac => mac.trim()).map(x => x.toUpperCase().replaceAll(':', '-')) : null,
                         }),
                     });
                     const data = await res.json();
