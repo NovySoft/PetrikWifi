@@ -149,7 +149,7 @@ export default async function handler(request, reply) {
                     } finally {
                         globalThis.unifiUpdateTimeouts.delete(clientKey);
                     }
-                }, 30 * 1000); // 30 seconds debounce, to make sure we unifi has time to log the user as online
+                }, 90 * 1000); // 90 seconds debounce, to make sure we unifi has time to log the user as online
                 globalThis.unifiUpdateTimeouts.set(clientKey, timeout);
             }
         }
