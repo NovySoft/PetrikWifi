@@ -19,7 +19,7 @@ export function initDB() {
 	    isManual INTEGER DEFAULT (0) NOT NULL,
 		banned INTEGER DEFAULT (0) NOT NULL,
 	    lastActive INTEGER,
-		expireAfterInactiveDays INTEGER DEFAULT (100),
+		expireAfterInactiveDays INTEGER DEFAULT (365),
 		expireAtDate INTEGER,
 		comment TEXT,
 		allowedDevices TEXT

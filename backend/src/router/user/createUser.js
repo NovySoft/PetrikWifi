@@ -56,7 +56,7 @@ export default async function createUser(req, rep) {
         salt.toString('hex'),
         Date.now(),
         req.body.admin ? 1 : 0,
-        req.body.expireAfterInactiveDays == -1 ? null : (req.body.expireAfterInactiveDays ?? 100),
+        req.body.expireAfterInactiveDays == -1 ? null : (req.body.expireAfterInactiveDays ?? 365),
         req.body.expireAtDate ?? null,
         req.body.allowChangePassword ? 1 : 0,
         req.body.banned ? 1 : 0,
