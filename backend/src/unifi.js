@@ -69,9 +69,27 @@ export async function updateUnifiClientName(mac, username) {
         await doTheConnection();
         await Promise.resolve(new Promise(resolve => setTimeout(resolve, 50)));
 
-        const device = await unifi.getClientDevice(mac.toLowerCase().replaceAll('-', ':'));
+        let device = null;
+        try {
+            device = await unifi.getClientDevice(mac.toLowerCase().replaceAll('-', ':'));
+            // HTTP 400
+            /* data: {
+                meta: {
+                  rc: 'error',
+                  mac: '9e:70:a8:8d:1b:d7',
+                  msg: 'api.err.UnknownUser'
+                },
+                data: []
+            } */
+        } catch (error) {
+            if (error?.data?.meta?.rc === 'error' && error?.data?.meta?.msg === 'api.err.UnknownUser') {
+                logger.error(`UNIFI: Device with MAC ${mac} not found:`, error?.data?.meta);
+                return;
+            }
+            throw error; // Re-throw other errors
+        }
         if (device == null || device.length !== 1) {
-            logger.error(`Device with MAC ${mac} not found`);
+            logger.error(`UNIFI: Device with MAC ${mac} not found`);
             return;
         }
         logger.debug(`Found device with MAC ${mac}:`, device[0]);
