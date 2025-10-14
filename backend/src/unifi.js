@@ -60,7 +60,7 @@ export async function updateUnifiClientName(mac, username) {
             await unifi.logout();
             await Promise.resolve(new Promise(resolve => setTimeout(resolve, 50)));
         } catch (error) {
-            logger.warn('Error during logout - Session might have expired, continuing with connection:', error);
+            logger.debug('Error during logout - Session might have expired, continuing with connection:', error);
             Sentry.captureException(error);
             await Sentry.flush(10000); // Wait for Sentry to send the event
         }
