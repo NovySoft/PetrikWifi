@@ -82,7 +82,7 @@ export async function updateUnifiClientName(mac, username) {
                 data: []
             } */
         } catch (error) {
-            if (error?.data?.meta?.rc === 'error' && error?.data?.meta?.msg === 'api.err.UnknownUser') {
+            if (error?.response?.data?.meta?.rc === 'error' && error?.response?.data?.meta?.msg === 'api.err.UnknownUser') {
                 logger.error(`UNIFI: Device with MAC ${mac} not found:`, error?.data?.meta);
                 return;
             }
