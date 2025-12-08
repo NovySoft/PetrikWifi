@@ -15,7 +15,16 @@
         height: 50vh !important;
         top: 25% !important;
       }
+    }
 
+    @media screen and (max-height: 500px) {
+      .panel {
+        top: 15% !important;
+      }
+
+      .footer {
+        display: none !important;
+      }
     }
   </style>
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -68,6 +77,7 @@
         Fiókkal</button>
       <button class="log" onclick="window.location.href = './login.html'">Bejelentkezés Jelszóval</button>
       <button class="log" onclick="window.location.href = 'https\:\/\/youtu\.be\/wHD4MLzjIwY'">Mi az a petrikwifi.hu? (Videó)</button>
+      <button class="log" onclick="alert('Hamarosan...')">Dokumentáció</button>
     </div>
   </div>
   <div id="particles-js">

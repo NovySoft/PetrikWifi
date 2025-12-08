@@ -176,12 +176,12 @@ li {
   right: 0;
   text-align: center;
   background-color: white;
-  top: 30%;
+  top: 25%;
   z-index: 100;
   width: 30vw;
   min-width: 215px;
-  height: 30vh;
-  min-height: 288px;
+  height: 40vh;
+  min-height: 360px;
   border-radius: 12px;
 }
 
