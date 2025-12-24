@@ -120,6 +120,7 @@
             banned: false,
             cantChangePassword: false,
             neverExpire: false,
+            hasAllowedDevices: false,
         }
 
         const azureUser = (username) => `
@@ -185,7 +186,10 @@
                     <br>
                     <p style="display: inline-block">Soha nem törlődik</p>
                     <input type="checkbox" id="neverExpire" class="swal2-checkbox" onchange="filters.neverExpire = this.checked; searchBarUpdated()" ${filters.neverExpire ? 'checked' : ''}>
-                </div>`,
+                    <br>
+                    <p style="display: inline-block;">Fehérlistás felhasználók</p>
+                    <input type="checkbox" id="hasAllowedDevices" class="swal2-checkbox" onchange="filters.hasAllowedDevices = this.checked; searchBarUpdated();" ${filters.hasAllowedDevices ? 'checked' : ''}>
+                </div>`, 
             });
             searchBarUpdated();
         }
@@ -209,7 +213,7 @@
         function updateFilterIndicator() {
             const indicator = document.getElementById('filter-indicator-dot');
             if (!indicator) return;
-            if (filters.admin || filters.banned || filters.cantChangePassword || filters.neverExpire) {
+            if (filters.admin || filters.banned || filters.cantChangePassword || filters.neverExpire || filters.hasAllowedDevices) {
                 indicator.style.display = 'block';
             } else {
                 indicator.style.display = 'none';
@@ -228,6 +232,9 @@
                     return false;
                 }
                 if (filters.neverExpire && ((user.expireAfterInactiveDays != -1 && user.expireAfterInactiveDays != null) || (user.expireAtDate != "" && user.expireAtDate != null))) {
+                    return false;
+                }
+                if (filters.hasAllowedDevices && (typeof user.allowedDevices === 'undefined' || user.allowedDevices.length === 0)) {
                     return false;
                 }
                 return true;
