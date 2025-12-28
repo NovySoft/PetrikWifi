@@ -89,6 +89,36 @@ export default async function handler(request, reply) {
             return;
         }
 
+        // Check allowedDevices whitelist (case-insensitive, dash/colon agnostic)
+        try {
+            let allowedDevices = user.allowedDevices;
+            if (typeof allowedDevices === 'string') {
+                allowedDevices = JSON.parse(allowedDevices || '[]');
+            }
+            if (Array.isArray(allowedDevices) && allowedDevices.length > 0) {
+                const canonicalizeMac = s => s.toLowerCase().replace(/[-:]/g, '');
+                const sourceMac = canonicalizeMac(request.body.source || '');
+                const normalizedAllowed = allowedDevices.map(canonicalizeMac);
+                if (!normalizedAllowed.includes(sourceMac)) {
+                    reply.status(403).send({
+                        error: 'Forbidden',
+                        code: 'NOT_WHITELISTED',
+                        message: 'This device is not allowed for this user.',
+                    });
+                    logger.warn(`RADIUS: Device not in allowedDevices for user ${request.body.username}: ${request.body.source}`, request.body);
+                    return;
+                }
+            }
+        } catch (e) {
+            logger.error('RADIUS: Error parsing/checking allowedDevices whitelist', e);
+            reply.status(500).send({
+                error: 'Server Error',
+                code: 'WHITELIST_PARSE_ERROR',
+                message: 'Internal error while checking allowed devices.',
+            });
+            return;
+        }
+
         const deviceInfo = db.prepare('SELECT * FROM Devices WHERE device = ?').all(request.body.source);
         if (deviceInfo == undefined || deviceInfo?.length == 0) {
             // This device is not in the database
