@@ -4,6 +4,7 @@ import { db } from './database.js';
 import { SUPER_SECRET_KEY, getKeyFromPassword, decrypt } from "./encryptor.js";
 import { updateUnifiClientName } from './unifi.js';
 export const FREERADIUS_IP = "172.18.1.2";
+const canonicalizeMac = s => s.toLowerCase().replace(/[-:]/g, '');
 
 export default async function handler(request, reply) {
     // request.body {username: 'novylevi', password: '', source: 'EA-B7-EE-4E-58-57', destination: '78-8A-20-8D-71-79:Petrik-Radius-Test', 'IP': '127.0.0.1', 'NAS': '78-8A-20-8D-71-79'}
@@ -40,7 +41,8 @@ export default async function handler(request, reply) {
         }
 
         // Check if the request is coming from authorized NAS
-        const nas = db.prepare('SELECT * FROM APs WHERE AP = ?').get(request.body.NAS.toUpperCase());
+        const nasNormalized = canonicalizeMac(request.body.NAS || '');
+        const nas = db.prepare("SELECT * FROM APs WHERE AP = ?'").get(nasNormalized);
         if (nas == undefined || nas?.length == 0) {
             reply.status(403).send({
                 error: 'Forbidden',
@@ -96,7 +98,6 @@ export default async function handler(request, reply) {
                 allowedDevices = JSON.parse(allowedDevices || '[]');
             }
             if (Array.isArray(allowedDevices) && allowedDevices.length > 0) {
-                const canonicalizeMac = s => s.toLowerCase().replace(/[-:]/g, '');
                 const sourceMac = canonicalizeMac(request.body.source || '');
                 const normalizedAllowed = allowedDevices.map(canonicalizeMac);
                 if (!normalizedAllowed.includes(sourceMac)) {

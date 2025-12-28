@@ -20,8 +20,9 @@ export default async function createAp(req, rep) {
         return;
     }
 
-    const { ip, ap, comment } = req.body;
-    if (ip === undefined || ap === undefined || ap == '' || ip == '') {
+    const canonicalizeMac = s => s.toLowerCase().replace(/[-:]/g, '');
+    const { ip, ap: apRaw, comment } = req.body;
+    if (ip === undefined || apRaw === undefined || apRaw == '' || ip == '') {
         rep.status(400).send({
             error: 'Bad Request',
             code: 'BAD_REQUEST',
@@ -30,8 +31,9 @@ export default async function createAp(req, rep) {
         return;
     }
 
+    const ap = canonicalizeMac(apRaw);
     const existing = db.prepare('SELECT 1 FROM APs WHERE IP = ? or AP = ?').get(ip, ap);
-    if (existing !== undefined && existing?.length > 0) {
+    if (existing !== undefined && Object.keys(existing).length > 0) {
         rep.status(409).send({
             error: 'Conflict',
             code: 'CONFLICT',

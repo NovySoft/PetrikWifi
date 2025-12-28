@@ -20,8 +20,9 @@ export default async function deleteAp(req, rep) {
         return;
     }
 
-    const { ap } = req.body;
-    if (ap === undefined || ap == '') {
+    const canonicalizeMac = s => s.toLowerCase().replace(/[-:]/g, '');
+    const { ap: apRaw } = req.body;
+    if (apRaw === undefined || apRaw == '') {
         rep.status(400).send({
             error: 'Bad Request',
             code: 'BAD_REQUEST',
@@ -30,8 +31,9 @@ export default async function deleteAp(req, rep) {
         return;
     }
 
+    const ap = canonicalizeMac(apRaw);
     const existing = db.prepare('SELECT 1 FROM APs WHERE AP = ?').get(ap);
-    if (existing == undefined || existing?.length == 0) {
+    if (existing == undefined || Object.keys(existing).length == 0) {
         rep.status(404).send({
             error: 'Not Found',
             code: 'NOT_FOUND',

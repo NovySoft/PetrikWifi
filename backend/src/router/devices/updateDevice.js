@@ -31,7 +31,7 @@ export default async function updateDevice(req, rep) {
     }
 
     const existing = db.prepare('SELECT 1 FROM Devices WHERE device = ? AND userID = ?').get(device, userID);
-    if (existing == undefined || existing?.length == 0) {
+    if (existing == undefined || Object.keys(existing).length == 0) {
         rep.status(404).send({
             error: 'Not Found',
             code: 'NOT_FOUND',
