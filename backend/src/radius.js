@@ -42,7 +42,7 @@ export default async function handler(request, reply) {
 
         // Check if the request is coming from authorized NAS
         const nasNormalized = canonicalizeMac(request.body.NAS || '');
-        const nas = db.prepare("SELECT * FROM APs WHERE AP = ?'").get(nasNormalized);
+        const nas = db.prepare("SELECT * FROM APs WHERE AP = ?").get(nasNormalized);
         if (nas == undefined || nas?.length == 0) {
             reply.status(403).send({
                 error: 'Forbidden',
