@@ -36,49 +36,74 @@ export default function backupDatabase() {
                                 password: process.env.NX_CLOUD_PASS,
                             }
                         );
-                        const directoryItems = await client.getDirectoryContents("/");
+                        
+                        try {
+                            const directoryItems = await client.getDirectoryContents("/");
 
-                        if (!directoryItems.some(item => item.filename === '/Databases')) {
-                            logger.info('Creating /Databases directory on NextCloud...');
-                            await client.createDirectory('/Databases');
-                            await client.createDirectory('/Databases/Archive');
-                        }
+                            if (!directoryItems.some(item => item.filename === '/Databases')) {
+                                logger.info('Creating /Databases directory on NextCloud...');
+                                await client.createDirectory('/Databases');
+                                await client.createDirectory('/Databases/Archive');
+                            }
 
-                        if (!directoryItems.some(item => item.filename === '/Logs')) {
-                            logger.info('Creating /Logs directory on NextCloud...');
-                            await client.createDirectory('/Logs');
+                            if (!directoryItems.some(item => item.filename === '/Logs')) {
+                                logger.info('Creating /Logs directory on NextCloud...');
+                                await client.createDirectory('/Logs');
+                            }
+                        } catch (err) {
+                            logger.error('Error checking/creating base directories on NextCloud: ' + err);
+                            Sentry.captureException(err);
                         }
 
                         const time = Date.now();
                         logger.info('Uploading database backup to NextCloud...');
-                        await client.putFileContents('/Databases/' + backupFileName.split('/').pop(), fs.createReadStream(backupFileName), { overwrite: true });
-                        logger.info('Today\'s database backup uploaded to NextCloud. Took ' + (Date.now() - time) + 'ms.');
+                        try {
+                            await client.putFileContents('/Databases/' + backupFileName.split('/').pop(), fs.createReadStream(backupFileName), { overwrite: true });
+                            logger.info('Today\'s database backup uploaded to NextCloud. Took ' + (Date.now() - time) + 'ms.');
+                        } catch (err) {
+                            logger.error('Error uploading database backup to NextCloud: ' + err);
+                            Sentry.captureException(err);
+                        }
 
                         if (backupDate.getDate() == 1) {
                             const archiveTime = Date.now();
-                            const lastMonth = new Date(backupDate.getFullYear(), backupDate.getMonth() - 1, 1);
-                            if (!(await client.exists('/Databases/Archive/' + lastMonth.getFullYear()))) {
-                                logger.info('Creating /Databases/Archive/' + lastMonth.getFullYear() + ' directory on NextCloud...');
-                                await client.createDirectory('/Databases/Archive/' + lastMonth.getFullYear());
-                            }
+                            try {
+                                if (!(await client.exists('/Databases/Archive/' + backupDate.getFullYear()))) {
+                                    logger.info('Creating /Databases/Archive/' + backupDate.getFullYear() + ' directory on NextCloud...');
+                                    await client.createDirectory('/Databases/Archive/' + backupDate.getFullYear());
+                                }
 
-                            logger.info('Copying last month\'s database backup to archive...');
-                            await client.copyFile(
-                                '/Databases/' + backupFileName.split('/').pop(),
-                                `/Databases/Archive/${lastMonth.getFullYear()}/${backupFileName.split('/').pop()}`
-                            );
-                            logger.info(`Copying last month's database backup to archive finished. Took ${(Date.now() - archiveTime)}ms. (/Databases/Archive/${lastMonth.getFullYear()}/${backupFileName.split('/').pop()})`);
+                                logger.info('Copying database backup to archive...');
+                                await client.copyFile(
+                                    '/Databases/' + backupFileName.split('/').pop(),
+                                    `/Databases/Archive/${backupDate.getFullYear()}/${backupFileName.split('/').pop()}`
+                                );
+                                logger.info(`Copying database backup to archive finished. Took ${(Date.now() - archiveTime)}ms. (/Databases/Archive/${backupDate.getFullYear()}/${backupFileName.split('/').pop()})`);
+                            } catch (err) {
+                                logger.error('Error creating archive or copying database backup on NextCloud: ' + err);
+                                Sentry.captureException(err);
+                            }
                         }
 
                         const deleteOldBackupsTime = Date.now();
                         logger.info('Deleting remote backups older than 30 days...');
                         const thirtyDaysAgo = new Date(backupDate.getTime() - (30 * 24 * 60 * 60 * 1000));
-                        const items = (await client.getDirectoryContents('/Databases/')).filter(item => item.type === 'file' && new Date(item.lastmod) < thirtyDaysAgo);
-                        for (const item of items) {
-                            logger.info(`Deleting backup ${item.filename}...`);
-                            await client.deleteFile(item.filename);
+                        try {
+                            const items = (await client.getDirectoryContents('/Databases/')).filter(item => item.type === 'file' && new Date(item.lastmod) < thirtyDaysAgo);
+                            for (const item of items) {
+                                try {
+                                    logger.info(`Deleting backup ${item.filename}...`);
+                                    await client.deleteFile(item.filename);
+                                } catch (err) {
+                                    logger.error(`Error deleting backup ${item.filename} on NextCloud: ` + err);
+                                    Sentry.captureException(err);
+                                }
+                            }
+                            logger.info('Deleting remote backups older than 30 days finished. Took ' + (Date.now() - deleteOldBackupsTime) + 'ms.');
+                        } catch (err) {
+                            logger.error('Error fetching/deleting old backups on NextCloud: ' + err);
+                            Sentry.captureException(err);
                         }
-                        logger.info('Deleting remote backups older than 30 days finished. Took ' + (Date.now() - deleteOldBackupsTime) + 'ms.');
 
                         let logTime = Date.now();
                         logger.info('Uploading log file to NextCloud...');
@@ -90,8 +115,13 @@ export default function backupDatabase() {
                             if (process.env.NODE_ENV !== 'production') {
                                 createNewFileName += '.test';
                             }
-                            await client.putFileContents(createNewFileName, fs.createReadStream(logFilePath), { overwrite: true });
-                            logger.info('Yesterday\'s log file uploaded to NextCloud. Took ' + (Date.now() - logTime) + 'ms.');
+                            try {
+                                await client.putFileContents(createNewFileName, fs.createReadStream(logFilePath), { overwrite: true });
+                                logger.info('Yesterday\'s log file uploaded to NextCloud. Took ' + (Date.now() - logTime) + 'ms.');
+                            } catch (err) {
+                                logger.error('Error uploading log file to NextCloud: ' + err);
+                                Sentry.captureException(err);
+                            }
                         } else {
                             logger.warn(`Yesterday's log file not found. (${logFilePath}) Skipping upload.`);
                         }
@@ -103,8 +133,13 @@ export default function backupDatabase() {
                             if (process.env.NODE_ENV !== 'production') {
                                 createNewFileName += '.test';
                             }
-                            await client.putFileContents(createNewFileName, fs.createReadStream(errorLogFilePath), { overwrite: true });
-                            logger.info('Yesterday\'s error log file uploaded to NextCloud. Took ' + (Date.now() - logTime) + 'ms.');
+                            try {
+                                await client.putFileContents(createNewFileName, fs.createReadStream(errorLogFilePath), { overwrite: true });
+                                logger.info('Yesterday\'s error log file uploaded to NextCloud. Took ' + (Date.now() - logTime) + 'ms.');
+                            } catch (err) {
+                                logger.error('Error uploading error log file to NextCloud: ' + err);
+                                Sentry.captureException(err);
+                            }
                         } else {
                             logger.info(`Yesterday's error log was probably empty. (${errorLogFilePath}) Skipping upload.`);
                         }
@@ -112,14 +147,24 @@ export default function backupDatabase() {
                         const deleteLogsTime = Date.now();
                         logger.info('Deleting remote logs older than 365 days...');
                         const aYearAgo = new Date(backupDate.getTime() - (365 * 24 * 60 * 60 * 1000));
-                        const logItems = (await client.getDirectoryContents('/Logs/')).filter(item => item.type === 'file' && new Date(item.lastmod) < aYearAgo);
-                        for (const item of logItems) {
-                            logger.info(`Deleting log ${item.filename}...`);
-                            await client.deleteFile(item.filename);
+                        try {
+                            const logItems = (await client.getDirectoryContents('/Logs/')).filter(item => item.type === 'file' && new Date(item.lastmod) < aYearAgo);
+                            for (const item of logItems) {
+                                try {
+                                    logger.info(`Deleting log ${item.filename}...`);
+                                    await client.deleteFile(item.filename);
+                                } catch (err) {
+                                    logger.error(`Error deleting log ${item.filename} on NextCloud: ` + err);
+                                    Sentry.captureException(err);
+                                }
+                            }
+                            logger.info('Deleting remote logs older than 365 days finished. Took ' + (Date.now() - deleteLogsTime) + 'ms.');
+                        } catch (err) {
+                            logger.error('Error fetching/deleting old logs on NextCloud: ' + err);
+                            Sentry.captureException(err);
                         }
-                        logger.info('Deleting remote logs older than 365 days finished. Took ' + (Date.now() - deleteLogsTime) + 'ms.');
                     } catch (err) {
-                        logger.error('Error while uploading database backup to NextCloud: ' + err);
+                        logger.error('Error while setting up NextCloud client or executing a critical backup step: ' + err);
                         Sentry.captureException(err);
                     }
                 })
