@@ -3,6 +3,9 @@ var oldConsoleError = console.error;
 console.error = reportingConsoleError; // defined via function hoisting
 function reportingConsoleError() {
     var args = Array.prototype.slice.call(arguments);
+    if (!isSentryAvailable()) {
+        return oldConsoleError.apply(console, args);
+    }
     Sentry.captureException(reduceConsoleArgs(args));
     return oldConsoleError.apply(console, args);
 };
@@ -11,6 +14,9 @@ var oldConsoleWarn = console.warn;
 console.warn = reportingConsoleWarn; // defined via function hoisting
 function reportingConsoleWarn() {
     var args = Array.prototype.slice.call(arguments);
+    if (!isSentryAvailable()) {
+        return oldConsoleWarn.apply(console, args);
+    }
     Sentry.captureMessage(reduceConsoleArgs(args), 'warning');
     return oldConsoleWarn.apply(console, args);
 }
@@ -19,8 +25,18 @@ var oldConsoleLog = console.log;
 console.log = reportingConsoleLog;
 function reportingConsoleLog() {
     var args = Array.prototype.slice.call(arguments);
+    if (!isSentryAvailable()) {
+        return oldConsoleLog.apply(console, args);
+    }
     Sentry.addBreadcrumb({ level: 'log', message: reduceConsoleArgs(args) });
     return oldConsoleLog.apply(console, args);
+}
+
+function isSentryAvailable() {
+    return typeof window !== 'undefined' && !!window.Sentry &&
+        typeof window.Sentry.captureException === 'function' &&
+        typeof window.Sentry.captureMessage === 'function' &&
+        typeof window.Sentry.addBreadcrumb === 'function';
 }
 
 function reduceConsoleArgs(args) {

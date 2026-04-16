@@ -38,7 +38,9 @@
         await checkAuth();
     } catch(err) {
         console.error(err);
-        Sentry.captureException(err);
+        if (window.Sentry?.captureException) {
+            window.Sentry.captureException(err);
+        }
         Swal.fire({
             icon: 'error',
             title: 'Hiba történt!',
@@ -147,7 +149,9 @@
                 });
             } catch (err) {
                 console.error(err);
-                Sentry.captureException(err);
+                if (window.Sentry?.captureException) {
+                    window.Sentry.captureException(err);
+                }
                 Swal.fire({
                     icon: 'error',
                     title: 'Hiba történt!',

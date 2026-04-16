@@ -42,11 +42,15 @@
     <link rel="manifest" href="/site.webmanifest">
     <script src="https://js-de.sentry-cdn.com/f0a8e95bd836b63881e5a3feb9d7f256.min.js" crossorigin="anonymous"></script>
     <script>
-        Sentry.onLoad(function () {
-            Sentry.init({
-                attachStacktrace: true,
+        if (window.Sentry) {
+            Sentry.onLoad(function () {
+                Sentry.init({
+                    attachStacktrace: true,
+                });
             });
-        });
+        } else {
+            console.error('Sentry could not be loaded');
+        }
     </script>
 </head>
 
@@ -57,7 +61,9 @@
         await getLogs();
     } catch (err) {
         console.error(err);
-        Sentry.captureException(err);
+        if (window.Sentry?.captureException) {
+            window.Sentry.captureException(err);
+        }
         Swal.fire({
             title: 'HIBA!',
             text: err.toString(),
