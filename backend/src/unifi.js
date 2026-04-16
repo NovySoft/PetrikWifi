@@ -56,19 +56,6 @@ export async function updateUnifiClientName(mac, username) {
     }
 
     try {
-        try {
-            await unifi.logout();
-            await Promise.resolve(new Promise(resolve => setTimeout(resolve, 50)));
-        } catch (error) {
-            logger.debug('Error during logout - Session might have expired, continuing with connection:', error);
-            Sentry.captureException(error);
-            await Sentry.flush(10000); // Wait for Sentry to send the event
-        }
-
-        //Wait for 50ms to ensure the connection is established
-        await doTheConnection();
-        await Promise.resolve(new Promise(resolve => setTimeout(resolve, 50)));
-
         let device = null;
         try {
             device = await unifi.getClientDevice(mac.toLowerCase().replaceAll('-', ':'));
@@ -82,12 +69,20 @@ export async function updateUnifiClientName(mac, username) {
                 data: []
             } */
         } catch (error) {
-            if (error?.response?.data?.meta?.rc === 'error' && error?.response?.data?.meta?.msg === 'api.err.UnknownUser') {
-                logger.error(`UNIFI: Device with MAC ${mac} not found:`, error?.data?.meta);
+            // Check if error is 401 Unauthorized
+            if (error?.response?.status === 401 || (error?.response?.data?.meta?.rc === 'error' && error?.response?.data?.meta?.msg === 'api.err.LoginRequired')) {
+                logger.debug('Session expired, re-authenticating with UniFi controller...');
+                await doTheConnection();
+                await Promise.resolve(new Promise(resolve => setTimeout(resolve, 50)));
+                device = await unifi.getClientDevice(mac.toLowerCase().replaceAll('-', ':'));
+            } else if (error?.response?.data?.meta?.rc === 'error' && error?.response?.data?.meta?.msg === 'api.err.UnknownUser') {
+                logger.error(`UNIFI: Device with MAC ${mac} not found:`, error?.response?.data?.meta);
                 return;
+            } else {
+                throw error;
             }
-            throw error; // Re-throw other errors
         }
+        
         if (device == null || device.length !== 1) {
             logger.error(`UNIFI: Device with MAC ${mac} not found`);
             return;
