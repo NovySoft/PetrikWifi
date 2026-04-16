@@ -19,11 +19,11 @@ export default function backupDatabase() {
             if (process.env.NODE_ENV !== 'production') {
                 backupFileName += '.test';
             }
-            db.backup(backupFileName)
-                .then(async () => {
-                    logger.info(`Database backup finished. (${backupFileName}) Took ${Date.now() - backupTime}ms.`);
+            try {
+                await db.backup(backupFileName);
+                logger.info(`Database backup finished. (${backupFileName}) Took ${Date.now() - backupTime}ms.`);
 
-                    if (process.env.NX_CLOUD_URL == null || process.env.NX_CLOUD_USER == null || process.env.NX_CLOUD_PASS == null) {
+                if (process.env.NX_CLOUD_URL == null || process.env.NX_CLOUD_USER == null || process.env.NX_CLOUD_PASS == null) {
                         logger.warn("NextCloud credentials not set. Database and log will not be backed up!");
                         return;
                     }
@@ -167,23 +167,22 @@ export default function backupDatabase() {
                         logger.error('Error while setting up NextCloud client or executing a critical backup step: ' + err);
                         Sentry.captureException(err);
                     }
-                })
-                .catch((err) => {
-                    logger.error('Backup failed: ' + err);
-                    Sentry.captureException(err);
-                });
-
-            const deleteLocalBackupsTime = Date.now();
-            logger.info('Deleting local backups older than 30 days...');
-            const thirtyDaysAgo = new Date(Date.now() - (30 * 24 * 60 * 60 * 1000));
-            const files = fs.readdirSync('./database/').filter(file => file.endsWith('.db'));
-            for (const file of files) {
-                const stats = fs.statSync(`./database/${file}`);
-                if (stats.mtime < thirtyDaysAgo) {
-                    logger.info(`Deleting local backup ${file}...`);
-                    fs.unlinkSync(`./database/${file}`);
+            } catch (err) {
+                logger.error('Backup failed: ' + err);
+                Sentry.captureException(err);
+            } finally {
+                const deleteLocalBackupsTime = Date.now();
+                logger.info('Deleting local backups older than 30 days...');
+                const thirtyDaysAgo = new Date(Date.now() - (30 * 24 * 60 * 60 * 1000));
+                const files = fs.readdirSync('./database/').filter(file => file.endsWith('.db'));
+                for (const file of files) {
+                    const stats = fs.statSync(`./database/${file}`);
+                    if (stats.mtime < thirtyDaysAgo) {
+                        logger.info(`Deleting local backup ${file}...`);
+                        fs.unlinkSync(`./database/${file}`);
+                    }
                 }
+                logger.info('Deleting local backups older than 30 days finished. Took ' + (Date.now() - deleteLocalBackupsTime) + 'ms.');
             }
-            logger.info('Deleting local backups older than 30 days finished. Took ' + (Date.now() - deleteLocalBackupsTime) + 'ms.');
         });
 }
