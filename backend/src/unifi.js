@@ -12,7 +12,13 @@ export const unifi = new Unifi.Controller({
 
 async function doTheConnection() {
     try {
-        unifi._isInit = false; // Reset the connection state
+        if (unifi._isInit === true) {
+            unifi._isInit = false; // Reset the connection state
+            if (unifi._cookieJar && typeof unifi._cookieJar.removeAllCookiesSync === 'function') {
+                unifi._cookieJar.removeAllCookiesSync(); // Clear cookies so UniFiOS detection doesn't break on retry
+            }
+        }
+        
         const loginData = await unifi.login(process.env.UNIFI_USERNAME, process.env.UNIFI_PASSWORD);
         if (loginData === true) {
             logger.debug('Connected to UniFi controller successfully');
