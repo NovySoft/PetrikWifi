@@ -4,13 +4,28 @@
 set -euo pipefail
 
 # Configuration
-LOG_FILE="/home/petrik/RADIUS/backend/logs/MAIN.log"
-ERROR_LOG_FILE="/home/petrik/RADIUS/backend/logs/ERROS-MAIN.log"
+REPO_DIR="/home/petrik/RADIUS/"
+LOG_FILE="${REPO_DIR}backend/logs/MAIN.log"
+ERROR_LOG_FILE="${REPO_DIR}backend/logs/ERROS-MAIN.log"
 exec 2>> "$ERROR_LOG_FILE"
 
+# Load variables from .env strictly into the script's local session (no export)
+if [ -f "${REPO_DIR}.env" ]; then
+    while IFS='=' read -r key value; do
+        if [[ ! $key =~ ^# && -n $key ]]; then
+            # Remove potential wrapping quotes
+            value="${value%\"}"
+            value="${value#\"}"
+            value="${value%\'}"
+            value="${value#\'}"
+            declare "$key=$value"
+        fi
+    done < "${REPO_DIR}.env"
+fi
+
 # Sentry Configuration
-SENTRY_INGEST="https://<ID>.ingest.de.sentry.io"
-SENTRY_CRONS="${SENTRY_INGEST}/api/<ID>/cron/gitfetch/<KEY>/"
+SENTRY_INGEST="https://${SENTRY_INGEST_ID}.ingest.de.sentry.io"
+SENTRY_CRONS="${SENTRY_INGEST}/api/${SENTRY_API_ID}/cron/gitfetch/${SENTRY_KEY}/"
 
 CHECK_IN_ID="$(uuidgen)"
 
@@ -41,7 +56,6 @@ handle_exit() {
 
 trap handle_exit EXIT
 
-REPO_DIR="/home/petrik/RADIUS/"
 cd "$REPO_DIR"
 
 git fetch origin main >/dev/null
