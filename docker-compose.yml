@@ -67,7 +67,7 @@ services:
       - './certs/wifi@petrik.hu.p12:/opt/etc/raddb/certs/wifi@petrik.hu.p12'
       - './certs/wifi@petrik.hu.pem:/opt/etc/raddb/certs/wifi@petrik.hu.pem'
       - './freeradius/eapol_test.conf:/eapol_test.conf.template'
-    command: radiusd -X
+    command: radiusd #-X for debugging
     healthcheck:
       test: eapol_test -c /eapol_test.conf -s $$RADTEST_SECRET || exit 1
       interval: 30s
