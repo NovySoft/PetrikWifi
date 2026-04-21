@@ -76,11 +76,8 @@ services:
     depends_on:
       - auth_server
     restart: always
-    environment:
-      - RADTEST_USER=radtest
-      - RADTEST_PASS=radtest
-      - RADTEST_SECRET=radtest
-      - TZ=Europe/Budapest
+    env_file:
+      - .env
 
   auth_server:
     platform: linux/x86_64
@@ -105,22 +102,8 @@ services:
       interval: 30s
       timeout: 20s
       retries: 5
-    environment:
-      - NODE_ENV=development
-      - SUPER_SECRET=Super_Secret
-      - MS_CLIENT_ID=MS_CLIENT_ID
-      - MS_CLIENT_SECRET=MS_CLIENT_SECRET
-      - MS_AUTHORIZE_PATH=/tenant/oauth2/v2.0/authorize
-      - MS_TOKEN_PATH=/tenant/oauth2/v2.0/token
-      - SENTRY_DSN=https://example.sentry.dsn/123456789
-      - REDIRECT_BASE=http://localhost:3000
-      - NX_CLOUD_URL=https://cloud.example.com
-      - NX_CLOUD_USER=example_user
-      - NX_CLOUD_PASS=example_password
-      - UNIFI_HOST=192.168.1.1
-      - UNIFI_PORT=443
-      - UNIFI_USERNAME=example_username
-      - UNIFI_PASSWORD=example_password
+    env_file:
+      - .env
   
 networks:
   petrik-radius-bridge:

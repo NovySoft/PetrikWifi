@@ -2,6 +2,7 @@ docker-compose-PROD.yml
 continous_deployment-PROD.sh
 docker-compose-TEST.yml
 secret.txt
+.env
 
 ascii_logo_for_console.txt
 ascii_logo.txt
