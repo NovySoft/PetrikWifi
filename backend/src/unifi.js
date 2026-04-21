@@ -104,3 +104,48 @@ export async function updateUnifiClientName(mac, username) {
         await Sentry.flush(10000); // Wait for Sentry to send the event
     }
 }
+
+async function rebootLongRunningDevices() {
+    try {
+        logger.debug('Connecting to UniFi for reboot task...');
+        await doTheConnection();
+
+        // 2. Fetch all UniFi devices
+        logger.debug('Fetching UniFi devices...');
+        const devices = await unifi.getAccessDevices();
+
+        if (!devices || devices.length === 0) {
+            logger.warn('No devices found.');
+            return;
+        }
+
+        // Calculate 30 days in seconds
+        const THIRTY_DAYS_IN_SECONDS = 30 * 24 * 60 * 60;
+
+        // 3. Iterate through devices to check adoption status and uptime
+        for (const device of devices) {
+            // Only check devices that are adopted by this controller
+            if (device.adopted) {
+                const uptimeDays = (device.uptime / (24 * 60 * 60)).toFixed(2);
+
+                if (device.uptime > THIRTY_DAYS_IN_SECONDS) {
+                    logger.info(`[Rebooting] Device: ${device.name || device.mac} | Uptime: ${uptimeDays} days`);
+                    // 4. Reboot the device using its MAC address
+                    //await unifi.restartDevice(device.mac, 'soft');
+                } else {
+                    logger.debug(`[Skipping] Device: ${device.name || device.mac} | Uptime: ${uptimeDays} days (under 30 days)`);
+                }
+            }
+        }
+
+    } catch (error) {
+        logger.error('Error occurred in rebootLongRunningDevices:', error);
+        if (error.response) {
+            logger.error(`Status: ${error.response.status}`);
+            logger.error('URL requested:', error.response.config?.url);
+            logger.error('Data:', error.response.data);
+        }
+        Sentry.captureException(error);
+        await Sentry.flush(10000); // Wait for Sentry to send the event
+    }
+}

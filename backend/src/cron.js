@@ -40,6 +40,7 @@ const job = new Cron('0 2 * * *', () => {
             logger.info('Log file cleaning finished. Took ' + (Date.now() - time) + 'ms.');
 
             backupDatabase();
+            rebootLongRunningDevices();
         },
     );
 });
