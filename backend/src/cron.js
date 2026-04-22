@@ -3,7 +3,7 @@ import { cleanDatabase } from './databaseCleaner.js';
 import logger from './logger.js';
 import fs from 'fs';
 import * as Sentry from "@sentry/node";
-import backupDatabase from './databaseBackup.js';
+import { backupDatabase, rebootLongRunningDevices } from './databaseBackup.js';
 
 if (process.env.NX_CLOUD_URL == null || process.env.NX_CLOUD_USER == null || process.env.NX_CLOUD_PASS == null) {
     logger.warn("NextCloud credentials not set. Database and log will not be backed up!");
