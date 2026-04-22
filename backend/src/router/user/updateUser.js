@@ -13,7 +13,7 @@ export default async function updateUser(req, res) {
     }
 
     if (req.session.get('user').isAdmin !== true) {
-        rep.status(403).send({
+        res.status(403).send({
             error: 'Forbidden',
             code: 'NOT_ADMIN',
             message: 'You are not an admin.',
@@ -112,4 +112,5 @@ export default async function updateUser(req, res) {
     res.status(200).send({
         success: true,
     });
+    logger.info(`User ${req.body.username} updated by ${req.session.get('user').userPrincipalName}`);
 }

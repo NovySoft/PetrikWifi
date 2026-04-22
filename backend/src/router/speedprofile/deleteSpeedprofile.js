@@ -28,6 +28,7 @@ export default async function deleteSpeedprofile(req, rep) {
             code: 'OK',
             message: 'Speedprofile Deleted',
         });
+        logger.info(`Speed profile deleted: ${req.body.id} by ${req.session.get('user').userPrincipalName}`);
     } catch (error) {
         if (error.code === 'SPEED_PROFILE_IN_USE') {
             logger.warn(`Speed profile deletion failed: ${error.message}`);

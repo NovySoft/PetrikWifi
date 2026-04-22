@@ -270,6 +270,9 @@ fastify.post('/getAllSpeedprofiles', getAllSpeedprofiles);
 import deleteSpeedprofile from "./router/speedprofile/deleteSpeedprofile.js";
 fastify.post('/deleteSpeedprofile', deleteSpeedprofile);
 
+import updateSpeedprofile from "./router/speedprofile/updateSpeedprofile.js";
+fastify.post('/updateSpeedprofile', updateSpeedprofile);
+
 import fastifyStatic from '@fastify/static';
 import { fileURLToPath } from 'url';
 import path from 'path';
