@@ -70,7 +70,7 @@ if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
     git reset --hard origin/main
     
     docker compose build
-    docker compose up -d
+    docker compose up -d --force-recreate --no-deps
     
     docker image prune -f
 
