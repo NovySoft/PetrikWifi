@@ -263,6 +263,10 @@ fastify.post('/getSelfDevices', getSelfDevices);
 import deleteDevice from './router/devices/deleteDevice.js';
 fastify.post('/deleteDevice', deleteDevice);
 
+/* Speed profile operations */
+import getAllSpeedprofiles from './router/speedprofile/getAllSpeedprofiles.js';
+fastify.post('/getAllSpeedprofiles', getAllSpeedprofiles);
+
 import fastifyStatic from '@fastify/static';
 import { fileURLToPath } from 'url';
 import path from 'path';

@@ -18,7 +18,7 @@ async function doTheConnection() {
                 unifi._cookieJar.removeAllCookiesSync(); // Clear cookies so UniFiOS detection doesn't break on retry
             }
         }
-        
+
         const loginData = await unifi.login(process.env.UNIFI_USERNAME, process.env.UNIFI_PASSWORD);
         if (loginData === true) {
             logger.debug('Connected to UniFi controller successfully');
@@ -88,7 +88,7 @@ export async function updateUnifiClientName(mac, username) {
                 throw error;
             }
         }
-        
+
         if (device == null || device.length !== 1) {
             logger.error(`UNIFI: Device with MAC ${mac} not found`);
             return;
@@ -147,5 +147,28 @@ export async function rebootLongRunningDevices() {
         }
         Sentry.captureException(error);
         await Sentry.flush(10000); // Wait for Sentry to send the event
+    }
+}
+
+export async function getSpeedProfiles() {
+    try {
+        try {
+            const result = await unifi.getUserGroups();
+            return result;
+        } catch (error) {
+            if (error?.response?.status === 401) {
+                logger.debug('Session expired, re-authenticating with UniFi controller...');
+                await doTheConnection();
+                await Promise.resolve(new Promise(resolve => setTimeout(resolve, 50)));
+                const result = await unifi.getUserGroups();
+                return result;
+            }
+            throw error;
+        }
+    } catch (error) {
+        logger.error('Error fetching speed profiles from UniFi:', error);
+        Sentry.captureException(error);
+        await Sentry.flush(10000);
+        return [];
     }
 }
