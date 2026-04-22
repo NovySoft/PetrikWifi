@@ -140,20 +140,22 @@
                 <p class="swal-ctext">Feltöltés (Mbps) [-1 = Korlátlan]</p>
                 <input type="number" id="ul" class="swal2-input" placeholder="Feltöltés sebessége (Mbps)" required min="-1">
                 `,
+                showCancelButton: true,
+                confirmButtonText: 'Létrehozás',
+                cancelButtonText: 'Mégse',
+                preConfirm: () => {
+                    const name = document.getElementById('name').value;
+                    const dl = parseFloat(document.getElementById('dl').value);
+                    const ul = parseFloat(document.getElementById('ul').value);
+                    if (!name || isNaN(dl) || isNaN(ul)) {
+                        Swal.showValidationMessage('Kérlek töltsd ki az összes mezőt érvényes adatokkal!');
+                        return false;
+                    }
+                    return { name, dl, ul };
+                }
             });
             if (result.isConfirmed) {
-                const name = document.getElementById('name').value;
-                const dl = parseFloat(document.getElementById('dl').value);
-                const ul = parseFloat(document.getElementById('ul').value);
-
-                if (!name || isNaN(dl) || isNaN(ul)) {
-                    Swal.fire({
-                        title: 'Hiányzó adatok',
-                        text: 'Kérlek töltsd ki az összes mezőt érvényes adatokkal!',
-                        icon: 'error',
-                    });
-                    return;
-                }
+                const { name, dl, ul } = result.value;
 
                 showLoading();
                 try {
@@ -163,9 +165,9 @@
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            name,
-                            qos_rate_max_down: dl === -1 ? -1 : Math.floor(dl * 1000),
-                            qos_rate_max_up: ul === -1 ? -1 : Math.floor(ul * 1000)
+                            group_name: name,
+                            group_dn: dl === -1 ? -1 : Math.floor(dl * 1000),
+                            group_up: ul === -1 ? -1 : Math.floor(ul * 1000)
                         }),
                     });
 
@@ -212,23 +214,21 @@
                 `,
                 showCancelButton: true,
                 confirmButtonText: 'Mentés',
-                cancelButtonText: 'Mégse'
+                cancelButtonText: 'Mégse',
+                preConfirm: () => {
+                    const name = document.getElementById('name').value;
+                    const dl = parseFloat(document.getElementById('dl').value);
+                    const ul = parseFloat(document.getElementById('ul').value);
+                    if (!name || isNaN(dl) || isNaN(ul)) {
+                        Swal.showValidationMessage('Kérlek töltsd ki az összes mezőt érvényes adatokkal!');
+                        return false;
+                    }
+                    return { name, dl, ul };
+                }
             });
 
             if (result.isConfirmed) {
-                const dl = parseFloat(document.getElementById('dl').value);
-                const ul = parseFloat(document.getElementById('ul').value);
-
-                if (isNaN(dl) || isNaN(ul)) {
-                    Swal.fire({ title: 'Hiányzó adatok', text: 'Érvényes számokat adj meg!', icon: 'error' });
-                    return;
-                }
-
-                const name = document.getElementById('name').value;
-                if (!name) {
-                    Swal.fire({ title: 'Hiányzó adatok', text: 'A név nem lehet üres!', icon: 'error' });
-                    return;
-                }
+                const { name, dl, ul } = result.value;
 
                 showLoading();
                 try {

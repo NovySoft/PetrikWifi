@@ -239,3 +239,26 @@ export async function updateSpeedProfile(group_id, site_id, group_name, group_dn
         throw error;
     }
 }
+
+export async function createSpeedProfile(group_name, group_dn = -1, group_up = -1) {
+    try {
+        try {
+            const result = await unifi.createUserGroup(group_name, group_dn, group_up);
+            return result;
+        } catch (error) {
+            if (error?.response?.status === 401) {
+                logger.debug('Session expired, re-authenticating with UniFi controller...');
+                await doTheConnection();
+                await Promise.resolve(new Promise(resolve => setTimeout(resolve, 50)));
+                const result = await unifi.createUserGroup(group_name, group_dn, group_up);
+                return result;
+            }
+            throw error;
+        }
+    } catch (error) {
+        logger.error('Error creating speed profile in UniFi:', error);
+        Sentry.captureException(error);
+        await Sentry.flush(10000);
+        throw error;
+    }
+}

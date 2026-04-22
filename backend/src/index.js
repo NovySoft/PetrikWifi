@@ -273,6 +273,9 @@ fastify.post('/deleteSpeedprofile', deleteSpeedprofile);
 import updateSpeedprofile from "./router/speedprofile/updateSpeedprofile.js";
 fastify.post('/updateSpeedprofile', updateSpeedprofile);
 
+import createSpeedprofile from "./router/speedprofile/createSpeedprofile.js";
+fastify.post('/createSpeedprofile', createSpeedprofile);
+
 import fastifyStatic from '@fastify/static';
 import { fileURLToPath } from 'url';
 import path from 'path';
