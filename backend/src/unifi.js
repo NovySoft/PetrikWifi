@@ -105,7 +105,7 @@ export async function updateUnifiClientName(mac, username) {
     }
 }
 
-async function rebootLongRunningDevices() {
+export async function rebootLongRunningDevices() {
     try {
         logger.debug('Connecting to UniFi for reboot task...');
         await doTheConnection();
