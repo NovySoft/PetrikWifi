@@ -172,3 +172,47 @@ export async function getSpeedProfiles() {
         return [];
     }
 }
+
+export async function deleteSpeedProfile(id) {
+    try {
+        try {
+            const result = await unifi.deleteUserGroup(id);
+            /*
+            failed delete response example:
+                {
+    "meta": {
+        "rc": "error",
+        "type": "User",
+        "id": "67ab0079541cee3198aaf7ca",
+        "name": "c8:6e:08:37:d1:4c",
+        "msg": "api.err.ObjectReferredBy"
+    },
+    "data": []
+}
+            */
+            return result;
+        } catch (error) {
+            if (error?.response?.status === 401) {
+                logger.debug('Session expired, re-authenticating with UniFi controller...');
+                await doTheConnection();
+                await Promise.resolve(new Promise(resolve => setTimeout(resolve, 50)));
+                const result = await unifi.deleteUserGroup(id);
+                return result;
+            } else if (error?.response?.data?.meta?.rc === 'error' && error?.response?.data?.meta?.msg === 'api.err.ObjectReferredBy') {
+                logger.error(`Failed to delete speed profile with id ${id} because it is still in use by a client.`, error?.response?.data?.meta);
+                const e = new Error('Cannot delete speed profile because it is still in use by a client.');
+                e.code = 'SPEED_PROFILE_IN_USE';
+                throw e;
+            }
+            throw error;
+        }
+    } catch (error) {
+        if (error.code === 'SPEED_PROFILE_IN_USE') {
+            throw error;
+        }
+        logger.error('Error deleting speed profile from UniFi:', error);
+        Sentry.captureException(error);
+        await Sentry.flush(10000);
+        throw error;
+    }
+}

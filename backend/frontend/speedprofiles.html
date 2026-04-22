@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>PetrikWifi - Sebesség Profilok</title>
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" media="screen" href="./css/style.css">
+    <style>
+        @media screen and (max-width: 800px) {
+            .userContainer {
+                height: 80px !important;
+            }
+        }
+
+        @media screen and (max-width: 520px) {
+            .icons {
+                height: 30px !important;
+                width: 30px !important;
+            }
+        }
+
+        .swal-ctext {
+            margin-bottom: 0px;
+        }
+
+        .swal2-input {
+            margin-top: 0px !important;
+        }
+    </style>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <script src="https://js-de.sentry-cdn.com/f0a8e95bd836b63881e5a3feb9d7f256.min.js" crossorigin="anonymous"></script>
+    <script>
+        if (window.Sentry) {
+            Sentry.onLoad(function () {
+                Sentry.init({
+                    attachStacktrace: true,
+                });
+            });
+        } else {
+            console.error('Sentry could not be loaded');
+        }
+    </script>
+</head>
+
+<body onload="(async () => {
+    showLoading();
+    try {
+        await checkAuth();
+        checkAdmin();
+        await getAllSpeedprofiles();
+    } catch(err) {
+        console.error(err);
+        if (window.Sentry?.captureException) {
+            window.Sentry.captureException(err);
+        }
+    } finally {
+        hideLoading();
+    }
+    })()">
+
+    <!-- particles.js container -->
+    <div class="dashpanel" style="height: 95vh;top:2.5%; width: 95vw;">
+        <div style="overflow-y: scroll;margin:10px;height: 98%;">
+            <h1>Sebesség Profil Konfiguráció</h1>
+            <button class="log" onclick="newSpeedprofile()">Új Profil</button>
+            <div style="width: 100%; margin-top: 20px;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; background-color: #EEEEEE; border-radius: 10px; overflow: hidden;">
+                    <thead style="background-color: #DDDDDD;">
+                        <tr>
+                            <th style="padding: 15px;">Név</th>
+                            <th style="padding: 15px;">Letöltés (Mbps)</th>
+                            <th style="padding: 15px;">Feltöltés (Mbps)</th>
+                            <th style="padding: 15px;">Műveletek</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mainContainer">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="particles-js">
+    </div>
+
+
+    <!-- scripts -->
+    <script src="./js/loading-spinner.js"></script>
+    <script src="./particles.js"></script>
+    <script src="./js/particle-loader.js"></script>
+    <script src="./js/check-auth.js"></script>
+    <script src="./js/escape-html.js"></script>
+    <script src="./js/report-console.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        async function getAllSpeedprofiles() {
+            const result = await fetch('/getAllSpeedprofiles', {
+                method: 'POST',
+            });
+
+            const data = await result.json();
+            console.log(data);
+
+            const mainContainer = document.getElementById('mainContainer');
+            mainContainer.innerHTML = '';
+
+            for (const item of data.speedprofiles) {
+                const dl = item.qos_rate_max_down === -1 ? -1 : (item.qos_rate_max_down ? item.qos_rate_max_down / 1000 : 0);
+                const ul = item.qos_rate_max_up === -1 ? -1 : (item.qos_rate_max_up ? item.qos_rate_max_up / 1000 : 0);
+                
+                mainContainer.innerHTML += `
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 15px;">${escapeHtml(item.name || '')}</td>
+                        <td style="padding: 15px;">${dl === -1 ? 'Korlátlan' : dl}</td>
+                        <td style="padding: 15px;">${ul === -1 ? 'Korlátlan' : ul}</td>
+                        <td style="padding: 15px;">
+                            ${item.attr_hidden_id != 'Default' ? `<button class="log" style="padding: 5px 15px; width: auto; font-size: 14px; margin-right: 5px;" onclick="editSpeedprofile('${item._id}', '${escapeHtml(item.name || '')}', ${dl}, ${ul})">Szerkesztés</button>` : ''}
+                            ${item.attr_hidden_id != 'Default' ? `<button class="log" style="padding: 5px 15px; width: auto; font-size: 14px; background-color: #ff4c4c; box-shadow: 0px 4px 10px rgba(255,0,0,0.5);" onclick="deleteSpeedprofile('${item._id}', '${escapeHtml(item.name || '')}')">Törlés</button>` : ''}
+                            ${item.attr_hidden_id == 'Default' ? `<span style="color: #888888; font-size: 14px;">Az alapértelmezett sebességet a unifi controller wifi fülén állítsd be!</span>` : ''}
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        async function newSpeedprofile() {
+            const result = await Swal.fire({
+                title: "Új Sebesség Profil",
+                html: `
+                <p class="swal-ctext">Név</p>
+                <input type="text" id="name" class="swal2-input" placeholder="Profil neve" required>
+                <p class="swal-ctext">Letöltés (Mbps) [-1 = Korlátlan]</p>
+                <input type="number" id="dl" class="swal2-input" placeholder="Letöltés sebessége (Mbps)" required min="-1">
+                <p class="swal-ctext">Feltöltés (Mbps) [-1 = Korlátlan]</p>
+                <input type="number" id="ul" class="swal2-input" placeholder="Feltöltés sebessége (Mbps)" required min="-1">
+                `,
+            });
+            if (result.isConfirmed) {
+                const name = document.getElementById('name').value;
+                const dl = parseFloat(document.getElementById('dl').value);
+                const ul = parseFloat(document.getElementById('ul').value);
+
+                if (!name || isNaN(dl) || isNaN(ul)) {
+                    Swal.fire({
+                        title: 'Hiányzó adatok',
+                        text: 'Kérlek töltsd ki az összes mezőt érvényes adatokkal!',
+                        icon: 'error',
+                    });
+                    return;
+                }
+
+                showLoading();
+                try {
+                    const res = await fetch('/createSpeedprofile', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            name,
+                            qos_rate_max_down: dl === -1 ? -1 : Math.floor(dl * 1000),
+                            qos_rate_max_up: ul === -1 ? -1 : Math.floor(ul * 1000)
+                        }),
+                    });
+
+                    const data = await res.json();
+                    if (data.code === "OK") {
+                        hideLoading();
+                        await Swal.fire({
+                            title: 'Sikeres hozzáadás',
+                            icon: 'success',
+                        });
+                        location.reload();
+                    } else {
+                        Swal.fire({
+                            title: 'Hiba történt',
+                            text: data.error || 'Ismeretlen hiba',
+                            icon: 'error',
+                        });
+                    }
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire({ title: 'Hiba történt', text: err.toString(), icon: 'error' });
+                } finally {
+                    hideLoading();
+                }
+            }
+        }
+
+        async function editSpeedprofile(id, currentName, currentDl, currentUl) {
+            const result = await Swal.fire({
+                title: "Profil szerkesztése",
+                html: `
+                <p class="swal-ctext">Név</p>
+                <input type="text" id="name" class="swal2-input" value="${currentName}" disabled>
+                <p class="swal-ctext">Letöltés (Mbps) [-1 = Korlátlan]</p>
+                <input type="number" id="dl" class="swal2-input" value="${currentDl}" required min="-1">
+                <p class="swal-ctext">Feltöltés (Mbps) [-1 = Korlátlan]</p>
+                <input type="number" id="ul" class="swal2-input" value="${currentUl}" required min="-1">
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Mentés',
+                cancelButtonText: 'Mégse'
+            });
+
+            if (result.isConfirmed) {
+                const dl = parseFloat(document.getElementById('dl').value);
+                const ul = parseFloat(document.getElementById('ul').value);
+
+                if (isNaN(dl) || isNaN(ul)) {
+                    Swal.fire({ title: 'Hiányzó adatok', text: 'Érvényes számokat adj meg!', icon: 'error' });
+                    return;
+                }
+
+                showLoading();
+                try {
+                    const res = await fetch('/updateSpeedprofile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id,
+                            qos_rate_max_down: dl === -1 ? -1 : Math.floor(dl * 1000),
+                            qos_rate_max_up: ul === -1 ? -1 : Math.floor(ul * 1000)
+                        }),
+                    });
+
+                    const data = await res.json();
+                    if (data.code === "OK") {
+                        hideLoading();
+                        await Swal.fire({ title: 'Sikeres szerkesztés', icon: 'success' });
+                        location.reload();
+                    } else {
+                        Swal.fire({ title: 'Hiba történt', text: data.error || 'Ismeretlen hiba', icon: 'error' });
+                    }
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire({ title: 'Hiba történt', text: err.toString(), icon: 'error' });
+                } finally {
+                    hideLoading();
+                }
+            }
+        }
+
+        async function deleteSpeedprofile(id, name) {
+            const confirm = await Swal.fire({
+                title: 'Biztosan törölni szeretnéd ezt a profilt?',
+                html: `<p>Név: ${name}</p>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Igen',
+                cancelButtonText: 'Mégse',
+            });
+
+            if (confirm.isConfirmed) {
+                showLoading();
+                try {
+                    const res = await fetch('/deleteSpeedprofile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id }),
+                    });
+
+                    const data = await res.json();
+                    if (data.code === "OK") {
+                        hideLoading();
+                        await Swal.fire({ title: 'Sikeres törlés', icon: 'success' });
+                        location.reload();
+                    } else if (data.code === "SPEED_PROFILE_IN_USE") {
+                        Swal.fire({ title: 'Sikertelen törlés', text: 'Ez a profil nem törölhető, mert használatban van egy vagy több eszköz által.', icon: 'error' });
+                    } else {
+                        Swal.fire({ title: 'Hiba történt', text: data.error || 'Ismeretlen hiba', icon: 'error' });
+                    }
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire({ title: 'Hiba történt', text: err.toString(), icon: 'error' });
+                } finally {
+                    hideLoading();
+                }
+            }
+        }
+
+    </script>
+
+    <div id="loader_overlay" class="hide">
+        <div id="loading"></div>
+    </div>
+</body>
+
+</html>
