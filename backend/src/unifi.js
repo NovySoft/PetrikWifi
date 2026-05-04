@@ -131,7 +131,7 @@ export async function rebootLongRunningDevices() {
                 if (device.uptime > THIRTY_DAYS_IN_SECONDS) {
                     logger.info(`[Rebooting] Device: ${device.name || device.mac} | Uptime: ${uptimeDays} days`);
                     // 4. Reboot the device using its MAC address
-                    //await unifi.restartDevice(device.mac, 'soft');
+                    await unifi.restartDevice(device.mac, 'soft');
                 } else {
                     logger.debug(`[Skipping] Device: ${device.name || device.mac} | Uptime: ${uptimeDays} days (under 30 days)`);
                 }
