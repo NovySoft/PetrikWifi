@@ -40,12 +40,12 @@ const logger = new Logger({
     maskValuesOfKeys: [],
 });
 logger.attachTransport((logObj) => {
-    const prefix = `${logObj._meta.date.toLocaleString('hu-HU', { timeZone: "Europe/Budapest" })} ${logObj._meta.logLevelName}: `
+    const prefix = `${logObj._logMeta.date.toLocaleString('hu-HU', { timeZone: "Europe/Budapest" })} ${logObj._logMeta.logLevelName}: `
     let out = prefix;
 
     // Extract 5 depths of nested objects using util.inspect
-    const copyOfMeta = { ...logObj._meta };
-    delete logObj._meta;
+    const copyOfMeta = { ...logObj._logMeta };
+    delete logObj._logMeta;
     const objValues = Object.values(logObj);
 
     if (objValues.length === 1 && typeof objValues[0] === 'string') {
